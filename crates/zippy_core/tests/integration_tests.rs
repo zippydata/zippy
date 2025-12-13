@@ -2,11 +2,14 @@
 //!
 //! These tests verify end-to-end workflows across multiple components.
 
-use serde_json::json;
 use std::path::PathBuf;
+
+use serde_json::json;
 use tempfile::TempDir;
-use zippy_core::writer::{BufferedWriter, SyncWriter, WriteConfig};
-use zippy_core::{Engine, FastStore, Layout, Result};
+use zippy_core::{
+    writer::{BufferedWriter, SyncWriter, WriteConfig},
+    Engine, FastStore, Layout, Result,
+};
 
 /// Create a temporary test directory with proper layout.
 fn setup_test_dir() -> (TempDir, PathBuf) {
@@ -404,8 +407,9 @@ mod cross_component {
 // =============================================================================
 
 mod layout {
-    use super::*;
     use zippy_core::container::{pack, unpack};
+
+    use super::*;
 
     #[test]
     fn test_layout_validation() -> Result<()> {

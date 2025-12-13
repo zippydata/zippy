@@ -1,9 +1,12 @@
 //! Python bindings for ZDS using PyO3.
 
-use pyo3::exceptions::{PyIOError, PyKeyError, PyValueError};
-use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyList, PyTuple};
 use std::sync::Mutex;
+
+use pyo3::{
+    exceptions::{PyIOError, PyKeyError, PyValueError},
+    prelude::*,
+    types::{PyDict, PyList, PyTuple},
+};
 use zippy_core::FastStore;
 
 /// Convert serde_json::Value to Python object
@@ -352,9 +355,7 @@ impl ScanIterator {
     }
 
     fn __next__(&mut self, py: Python<'_>) -> Option<PyObject> {
-        self.scanner
-            .next()
-            .and_then(|v| json_to_py(py, &v).ok())
+        self.scanner.next().and_then(|v| json_to_py(py, &v).ok())
     }
 }
 

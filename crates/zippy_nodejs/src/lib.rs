@@ -1,8 +1,9 @@
 //! Node.js bindings for ZDS using napi-rs.
 
+use std::sync::Mutex;
+
 use napi::bindgen_prelude::*;
 use napi_derive::napi;
-use std::sync::Mutex;
 use zippy_core::FastStore;
 
 /// High-performance ZDS Store backed by Rust FastStore (JSONL-based).

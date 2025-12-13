@@ -5,11 +5,12 @@
 //!
 //! Run with: cargo bench -- comparison
 
+use std::path::PathBuf;
+
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use rand::Rng;
 use rusqlite::{params, Connection};
 use serde_json::json;
-use std::path::PathBuf;
 use tempfile::TempDir;
 use zippy_core::{FastStore, Layout};
 

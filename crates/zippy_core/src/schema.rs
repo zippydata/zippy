@@ -1,12 +1,16 @@
 //! Schema registry and schema identity computation.
 
-use crate::{Codec, Error, Layout, Result};
+use std::{
+    collections::HashMap,
+    io::{BufRead, BufReader, Write},
+    path::Path,
+};
+
 use blake3;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::HashMap;
-use std::io::{BufRead, BufReader, Write};
-use std::path::Path;
+
+use crate::{Codec, Error, Layout, Result};
 
 /// A schema entry in the registry.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -206,8 +210,9 @@ impl SchemaRegistry {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use serde_json::json;
+
+    use super::*;
 
     #[test]
     fn test_compute_schema_id() {

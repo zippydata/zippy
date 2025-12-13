@@ -1,7 +1,8 @@
 //! JSON codec with projection and predicate support.
 
-use crate::{Error, Result};
 use serde_json::{Map, Value};
+
+use crate::{Error, Result};
 
 /// Predicate for filtering documents during scan.
 #[derive(Debug, Clone)]
@@ -141,8 +142,9 @@ impl Codec {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use serde_json::json;
+
+    use super::*;
 
     #[test]
     fn test_decode_encode() {

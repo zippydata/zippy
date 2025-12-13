@@ -1,8 +1,9 @@
 //! Zippy CLI - ZDS dataset management tool
 
+use std::path::{Path, PathBuf};
+
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
-use std::path::{Path, PathBuf};
 use zippy_core::{
     container::{pack, unpack},
     engine::Engine,

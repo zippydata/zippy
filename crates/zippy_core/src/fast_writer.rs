@@ -7,16 +7,20 @@
 //! - Sorted offset iteration for cache-friendly reads
 //! - mmap + parallel SIMD JSON parsing
 
-use crate::{Error, Layout, Result};
+use std::{
+    fs::{File, OpenOptions},
+    io::{BufRead, BufReader, BufWriter, Read, Seek, SeekFrom, Write},
+    path::{Path, PathBuf},
+    sync::Arc,
+};
+
 use memchr::memchr_iter;
 use memmap2::Mmap;
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 use serde_json::Value;
-use std::fs::{File, OpenOptions};
-use std::io::{BufRead, BufReader, BufWriter, Read, Seek, SeekFrom, Write};
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
+
+use crate::{Error, Layout, Result};
 
 /// Entry in the in-memory index (16 bytes, aligned).
 #[derive(Debug, Clone, Copy)]

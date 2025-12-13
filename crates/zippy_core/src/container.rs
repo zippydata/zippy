@@ -1,7 +1,8 @@
 //! Container abstraction for folder and archive access.
 
-use crate::{Error, Layout, Result};
 use std::path::{Path, PathBuf};
+
+use crate::{Error, Layout, Result};
 
 /// Container filesystem abstraction.
 #[derive(Debug, Clone)]
@@ -177,6 +178,7 @@ impl ContainerFS {
 /// Pack a folder container into a .zds archive.
 pub fn pack(source: &Path, dest: &Path) -> Result<()> {
     use std::io::Write;
+
     use zip::write::FileOptions;
 
     let file = std::fs::File::create(dest)?;
@@ -248,8 +250,9 @@ pub fn unpack(source: &Path, dest: &Path) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tempfile::TempDir;
+
+    use super::*;
 
     #[test]
     fn test_folder_container() {

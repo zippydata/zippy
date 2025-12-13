@@ -2,9 +2,12 @@
 //!
 //! Provides a stable C ABI for bindings (Python, Node, DuckDB).
 
+use std::{
+    ffi::{c_char, CStr, CString},
+    ptr,
+};
+
 use crate::{Engine, Error};
-use std::ffi::{c_char, CStr, CString};
-use std::ptr;
 
 /// Opaque handle to a ZDS engine.
 pub struct ZdsEngine(Engine);
@@ -240,10 +243,11 @@ pub extern "C" fn zds_version() -> *const c_char {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::{writer::SyncWriter, Layout};
     use serde_json::json;
     use tempfile::TempDir;
+
+    use super::*;
+    use crate::{writer::SyncWriter, Layout};
 
     #[test]
     fn test_ffi_basic() {

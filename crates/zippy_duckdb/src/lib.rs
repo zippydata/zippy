@@ -17,6 +17,7 @@
 //! against DuckDB's C API headers.
 
 use std::ffi::{c_char, c_void};
+
 use zippy_core::{Engine, Scanner};
 
 /// Extension version (must match DuckDB version for compatibility).
@@ -158,8 +159,9 @@ pub fn infer_schema(engine: &Engine) -> Vec<(&'static str, &'static str)> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::f64::consts::PI;
+
+    use super::*;
 
     #[test]
     fn test_json_type_mapping() {

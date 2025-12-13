@@ -1,7 +1,8 @@
 //! ZDS directory layout and path utilities.
 
-use crate::Result;
 use std::path::{Path, PathBuf};
+
+use crate::Result;
 
 /// ZDS directory layout constants and path helpers.
 pub struct Layout;
@@ -167,8 +168,9 @@ impl Layout {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tempfile::TempDir;
+
+    use super::*;
 
     #[test]
     fn test_path_builders() {

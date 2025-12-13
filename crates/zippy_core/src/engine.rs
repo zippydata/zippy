@@ -1,5 +1,10 @@
 //! Main engine for ZDS operations.
 
+use std::path::Path;
+
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
 use crate::{
     codec::{Codec, Predicate},
     container::ContainerFS,
@@ -7,9 +12,6 @@ use crate::{
     schema::SchemaRegistry,
     Error, Result,
 };
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
-use std::path::Path;
 
 /// Manifest for a collection.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -256,10 +258,11 @@ impl Iterator for Scanner {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::{writer::SyncWriter, Layout};
     use serde_json::json;
     use tempfile::TempDir;
+
+    use super::*;
+    use crate::{writer::SyncWriter, Layout};
 
     fn setup_test_collection() -> (TempDir, std::path::PathBuf) {
         let tmp = TempDir::new().unwrap();

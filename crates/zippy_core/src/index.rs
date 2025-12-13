@@ -1,10 +1,14 @@
 //! Document index and ordering.
 
-use crate::{Layout, Result};
+use std::{
+    collections::HashMap,
+    io::{BufRead, BufReader, Write},
+    path::Path,
+};
+
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::io::{BufRead, BufReader, Write};
-use std::path::Path;
+
+use crate::{Layout, Result};
 
 /// Document index entry.
 #[derive(Debug, Clone, Serialize, Deserialize)]

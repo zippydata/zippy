@@ -1,14 +1,18 @@
 //! Buffered writer with crash-safe commits.
 
+use std::{
+    path::{Path, PathBuf},
+    time::{Duration, Instant},
+};
+
+use serde_json::Value;
+
 use crate::{
     index::DocIndexEntry,
     schema::SchemaRegistry,
     txlog::{JournalEntry, TransactionLog},
     Error, IndexRegistry, Layout, Result,
 };
-use serde_json::Value;
-use std::path::{Path, PathBuf};
-use std::time::{Duration, Instant};
 
 /// Write operation.
 #[derive(Debug)]
@@ -332,9 +336,10 @@ impl SyncWriter {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use serde_json::json;
     use tempfile::TempDir;
+
+    use super::*;
 
     #[test]
     fn test_buffered_writer() {
