@@ -159,13 +159,14 @@ pub fn infer_schema(engine: &Engine) -> Vec<(&'static str, &'static str)> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::f64::consts::PI;
 
     #[test]
     fn test_json_type_mapping() {
         assert_eq!(json_to_duckdb_type(&serde_json::json!(null)), "VARCHAR");
         assert_eq!(json_to_duckdb_type(&serde_json::json!(true)), "BOOLEAN");
         assert_eq!(json_to_duckdb_type(&serde_json::json!(42)), "BIGINT");
-        assert_eq!(json_to_duckdb_type(&serde_json::json!(3.14)), "DOUBLE");
+        assert_eq!(json_to_duckdb_type(&serde_json::json!(PI)), "DOUBLE");
         assert_eq!(json_to_duckdb_type(&serde_json::json!("hello")), "VARCHAR");
         assert_eq!(json_to_duckdb_type(&serde_json::json!([1, 2, 3])), "JSON");
         assert_eq!(json_to_duckdb_type(&serde_json::json!({"a": 1})), "JSON");

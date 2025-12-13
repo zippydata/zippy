@@ -113,7 +113,7 @@ impl ZDSStore {
         let raw = store
             .scan_raw()
             .map_err(|e| Error::from_reason(format!("Scan failed: {}", e)))?;
-        Ok(raw.into_iter().map(|v| Buffer::from(v)).collect())
+        Ok(raw.into_iter().map(Buffer::from).collect())
     }
 
     /// Read entire JSONL file as a single buffer (fastest bulk read).

@@ -48,7 +48,7 @@ fn bench_full_scan(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("full_scan", count), count, |b, _| {
             let engine = Engine::open(&root, "bench").unwrap();
             b.iter(|| {
-                let mut scanner = engine.scan(None, None).unwrap();
+                let scanner = engine.scan(None, None).unwrap();
                 let docs: Vec<_> = scanner.collect();
                 black_box(docs)
             });
@@ -66,7 +66,7 @@ fn bench_projected_scan(c: &mut Criterion) {
     group.bench_function("all_fields", |b| {
         let engine = Engine::open(&root, "bench").unwrap();
         b.iter(|| {
-            let mut scanner = engine.scan(None, None).unwrap();
+            let scanner = engine.scan(None, None).unwrap();
             let docs: Vec<_> = scanner.collect();
             black_box(docs)
         });
@@ -75,7 +75,7 @@ fn bench_projected_scan(c: &mut Criterion) {
     group.bench_function("two_fields", |b| {
         let engine = Engine::open(&root, "bench").unwrap();
         b.iter(|| {
-            let mut scanner = engine.scan(None, Some(&["name", "age"])).unwrap();
+            let scanner = engine.scan(None, Some(&["name", "age"])).unwrap();
             let docs: Vec<_> = scanner.collect();
             black_box(docs)
         });
@@ -92,7 +92,7 @@ fn bench_filtered_scan(c: &mut Criterion) {
     group.bench_function("no_filter", |b| {
         let engine = Engine::open(&root, "bench").unwrap();
         b.iter(|| {
-            let mut scanner = engine.scan(None, None).unwrap();
+            let scanner = engine.scan(None, None).unwrap();
             let docs: Vec<_> = scanner.collect();
             black_box(docs)
         });
@@ -102,7 +102,7 @@ fn bench_filtered_scan(c: &mut Criterion) {
         let engine = Engine::open(&root, "bench").unwrap();
         let pred = zippy_core::Predicate::eq("active", true);
         b.iter(|| {
-            let mut scanner = engine.scan(Some(&pred), None).unwrap();
+            let scanner = engine.scan(Some(&pred), None).unwrap();
             let docs: Vec<_> = scanner.collect();
             black_box(docs)
         });

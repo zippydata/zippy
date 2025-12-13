@@ -354,8 +354,7 @@ impl ScanIterator {
     fn __next__(&mut self, py: Python<'_>) -> Option<PyObject> {
         self.scanner
             .next()
-            .map(|v| json_to_py(py, &v).ok())
-            .flatten()
+            .and_then(|v| json_to_py(py, &v).ok())
     }
 }
 

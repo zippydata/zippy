@@ -296,7 +296,7 @@ mod tests {
         let (_tmp, root) = setup_test_collection();
 
         let engine = Engine::open(&root, "test").unwrap();
-        let mut scanner = engine.scan(None, None).unwrap();
+        let scanner = engine.scan(None, None).unwrap();
 
         let docs: Vec<_> = scanner.collect();
         assert_eq!(docs.len(), 3);
@@ -308,7 +308,7 @@ mod tests {
 
         let engine = Engine::open(&root, "test").unwrap();
         let pred = Predicate::eq("name", "alice");
-        let mut scanner = engine.scan(Some(&pred), None).unwrap();
+        let scanner = engine.scan(Some(&pred), None).unwrap();
 
         let docs: Vec<_> = scanner.collect();
         assert_eq!(docs.len(), 1);
@@ -320,7 +320,7 @@ mod tests {
         let (_tmp, root) = setup_test_collection();
 
         let engine = Engine::open(&root, "test").unwrap();
-        let mut scanner = engine.scan(None, Some(&["name"])).unwrap();
+        let scanner = engine.scan(None, Some(&["name"])).unwrap();
 
         let docs: Vec<_> = scanner.collect();
         assert_eq!(docs.len(), 3);
