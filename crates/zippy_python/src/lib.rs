@@ -1,3 +1,5 @@
+#![allow(clippy::useless_conversion)] // PyO3-generated wrappers trigger this lint
+
 //! Python bindings for ZDS using PyO3.
 
 use std::sync::Mutex;
@@ -96,10 +98,10 @@ pub struct NativeStore {
     collection: String,
 }
 
+#[allow(clippy::useless_conversion)]
 #[pymethods]
 impl NativeStore {
     /// Open a ZDS store.
-    #[allow(clippy::useless_conversion)]
     #[staticmethod]
     #[pyo3(signature = (root, collection = "default", batch_size = 5000))]
     fn open(root: String, collection: &str, batch_size: usize) -> PyResult<Self> {
@@ -114,7 +116,6 @@ impl NativeStore {
     }
 
     /// Get document by ID.
-    #[allow(clippy::useless_conversion)]
     fn get(&self, py: Python<'_>, doc_id: &str) -> PyResult<PyObject> {
         let store = self
             .store
@@ -127,7 +128,6 @@ impl NativeStore {
     }
 
     /// Put a document.
-    #[allow(clippy::useless_conversion)]
     fn put(&self, doc_id: &str, doc: &Bound<'_, PyDict>) -> PyResult<()> {
         let value = py_to_json(doc.as_any())?;
         let mut store = self
@@ -141,7 +141,6 @@ impl NativeStore {
     }
 
     /// Put multiple documents in a single batch (much faster than individual puts).
-    #[allow(clippy::useless_conversion)]
     fn put_batch(&self, items: &Bound<'_, PyList>) -> PyResult<usize> {
         // Convert all items first (outside the lock)
         let mut batch: Vec<(String, serde_json::Value)> = Vec::with_capacity(items.len());
@@ -180,7 +179,6 @@ impl NativeStore {
     /// Use with orjson:
     ///   lines = [orjson.dumps({"_id": id, **doc}) for id, doc in items]
     ///   store.put_raw_batch([(id, line) for (id, _), line in zip(items, lines)])
-    #[allow(clippy::useless_conversion)]
     fn put_raw_batch(&self, items: &Bound<'_, PyList>) -> PyResult<usize> {
         let mut store = self
             .store
@@ -213,7 +211,6 @@ impl NativeStore {
     /// Write complete JSONL blob (fastest bulk write - single FFI call, single buffer copy).
     /// jsonl_blob: Pre-serialized JSONL bytes (newline-separated JSON objects with "_id" field).
     /// doc_ids: List of document IDs in order matching the lines.
-    #[allow(clippy::useless_conversion)]
     fn write_jsonl(&self, jsonl_blob: &[u8], doc_ids: Vec<String>) -> PyResult<usize> {
         let mut store = self
             .store
@@ -226,7 +223,6 @@ impl NativeStore {
     }
 
     /// Delete a document.
-    #[allow(clippy::useless_conversion)]
     fn delete(&self, doc_id: &str) -> PyResult<()> {
         let mut store = self
             .store
@@ -239,7 +235,6 @@ impl NativeStore {
     }
 
     /// Flush pending writes and refresh mmap for reads.
-    #[allow(clippy::useless_conversion)]
     fn flush(&self) -> PyResult<()> {
         let mut store = self
             .store
@@ -256,7 +251,6 @@ impl NativeStore {
     }
 
     /// Get document count.
-    #[allow(clippy::useless_conversion)]
     fn count(&self) -> PyResult<usize> {
         let store = self
             .store
@@ -266,7 +260,6 @@ impl NativeStore {
     }
 
     /// Check if document exists.
-    #[allow(clippy::useless_conversion)]
     fn exists(&self, doc_id: &str) -> PyResult<bool> {
         let store = self
             .store
@@ -276,7 +269,6 @@ impl NativeStore {
     }
 
     /// Scan all documents (mmap + parallel SIMD parsing).
-    #[allow(clippy::useless_conversion)]
     fn scan(&self, py: Python<'_>) -> PyResult<PyObject> {
         let store = self
             .store
@@ -294,7 +286,6 @@ impl NativeStore {
     }
 
     /// Scan and return raw JSON bytes (fastest - zero parsing, use with orjson).
-    #[allow(clippy::useless_conversion)]
     fn scan_raw(&self, py: Python<'_>) -> PyResult<PyObject> {
         let store = self
             .store
@@ -314,7 +305,6 @@ impl NativeStore {
     }
 
     /// List all document IDs.
-    #[allow(clippy::useless_conversion)]
     fn list_doc_ids(&self) -> PyResult<Vec<String>> {
         let store = self
             .store
@@ -325,7 +315,6 @@ impl NativeStore {
 
     /// Read entire JSONL file as bytes (fastest bulk read).
     /// Returns raw JSONL content - caller splits and parses.
-    #[allow(clippy::useless_conversion)]
     fn read_jsonl_blob(&self, py: Python<'_>) -> PyResult<PyObject> {
         let store = self
             .store
