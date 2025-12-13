@@ -96,6 +96,7 @@ pub struct NativeStore {
     collection: String,
 }
 
+#[allow(clippy::useless_conversion)]
 #[pymethods]
 impl NativeStore {
     /// Open a ZDS store.
