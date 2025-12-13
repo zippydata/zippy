@@ -81,18 +81,15 @@ impl Engine {
 
     /// Get document at index position (based on order.ids).
     pub fn get_document_at(&self, index: usize) -> Result<Value> {
-        let doc_id = self.index.get_doc_id_at(index).ok_or_else(|| {
-            Error::DocumentNotFound(format!("index {}", index))
-        })?;
+        let doc_id = self
+            .index
+            .get_doc_id_at(index)
+            .ok_or_else(|| Error::DocumentNotFound(format!("index {}", index)))?;
         self.get_document(doc_id)
     }
 
     /// Create a scanner for iterating documents.
-    pub fn scan(
-        &self,
-        predicate: Option<&Predicate>,
-        fields: Option<&[&str]>,
-    ) -> Result<Scanner> {
+    pub fn scan(&self, predicate: Option<&Predicate>, fields: Option<&[&str]>) -> Result<Scanner> {
         Scanner::new(
             self.container.clone(),
             self.collection.clone(),
@@ -270,9 +267,15 @@ mod tests {
         Layout::init_root(&root).unwrap();
 
         let mut writer = SyncWriter::new(&root, "test").unwrap();
-        writer.put("doc1", &json!({"name": "alice", "age": 30})).unwrap();
-        writer.put("doc2", &json!({"name": "bob", "age": 25})).unwrap();
-        writer.put("doc3", &json!({"name": "charlie", "age": 35})).unwrap();
+        writer
+            .put("doc1", &json!({"name": "alice", "age": 30}))
+            .unwrap();
+        writer
+            .put("doc2", &json!({"name": "bob", "age": 25}))
+            .unwrap();
+        writer
+            .put("doc3", &json!({"name": "charlie", "age": 35}))
+            .unwrap();
 
         (tmp, root)
     }

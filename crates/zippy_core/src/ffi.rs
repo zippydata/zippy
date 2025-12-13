@@ -100,10 +100,7 @@ pub unsafe extern "C" fn zds_count(engine: *const ZdsEngine) -> usize {
 /// - Returns a newly allocated JSON string (caller must free with `zds_free_string`)
 /// - Returns null on error
 #[no_mangle]
-pub unsafe extern "C" fn zds_get(
-    engine: *const ZdsEngine,
-    doc_id: *const c_char,
-) -> *mut c_char {
+pub unsafe extern "C" fn zds_get(engine: *const ZdsEngine, doc_id: *const c_char) -> *mut c_char {
     if engine.is_null() || doc_id.is_null() {
         return ptr::null_mut();
     }
@@ -116,7 +113,9 @@ pub unsafe extern "C" fn zds_get(
     match (*engine).0.get_document(doc_id) {
         Ok(doc) => {
             let json = serde_json::to_string(&doc).unwrap_or_default();
-            CString::new(json).map(|s| s.into_raw()).unwrap_or(ptr::null_mut())
+            CString::new(json)
+                .map(|s| s.into_raw())
+                .unwrap_or(ptr::null_mut())
         }
         Err(_) => ptr::null_mut(),
     }
@@ -129,10 +128,7 @@ pub unsafe extern "C" fn zds_get(
 /// - Returns a newly allocated JSON string (caller must free with `zds_free_string`)
 /// - Returns null on error
 #[no_mangle]
-pub unsafe extern "C" fn zds_get_at(
-    engine: *const ZdsEngine,
-    index: usize,
-) -> *mut c_char {
+pub unsafe extern "C" fn zds_get_at(engine: *const ZdsEngine, index: usize) -> *mut c_char {
     if engine.is_null() {
         return ptr::null_mut();
     }
@@ -140,7 +136,9 @@ pub unsafe extern "C" fn zds_get_at(
     match (*engine).0.get_document_at(index) {
         Ok(doc) => {
             let json = serde_json::to_string(&doc).unwrap_or_default();
-            CString::new(json).map(|s| s.into_raw()).unwrap_or(ptr::null_mut())
+            CString::new(json)
+                .map(|s| s.into_raw())
+                .unwrap_or(ptr::null_mut())
         }
         Err(_) => ptr::null_mut(),
     }
@@ -170,7 +168,9 @@ pub unsafe extern "C" fn zds_doc_ids(engine: *const ZdsEngine) -> *mut c_char {
 
     let ids = (*engine).0.doc_ids();
     let json = serde_json::to_string(ids).unwrap_or_else(|_| "[]".to_string());
-    CString::new(json).map(|s| s.into_raw()).unwrap_or(ptr::null_mut())
+    CString::new(json)
+        .map(|s| s.into_raw())
+        .unwrap_or(ptr::null_mut())
 }
 
 /// Scanner handle for iteration.
@@ -208,7 +208,9 @@ pub unsafe extern "C" fn zds_scan_next(scanner: *mut ZdsScanner) -> *mut c_char 
     match (*scanner).0.next() {
         Ok(Some(doc)) => {
             let json = serde_json::to_string(&doc).unwrap_or_default();
-            CString::new(json).map(|s| s.into_raw()).unwrap_or(ptr::null_mut())
+            CString::new(json)
+                .map(|s| s.into_raw())
+                .unwrap_or(ptr::null_mut())
         }
         _ => ptr::null_mut(),
     }

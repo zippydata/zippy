@@ -74,9 +74,8 @@ impl ContainerFS {
             }
             ContainerFS::Zip(path) => {
                 let file = std::fs::File::open(path)?;
-                let archive = zip::ZipArchive::new(file).map_err(|e| {
-                    Error::Archive(format!("Failed to open archive: {}", e))
-                })?;
+                let archive = zip::ZipArchive::new(file)
+                    .map_err(|e| Error::Archive(format!("Failed to open archive: {}", e)))?;
 
                 let mut collections = std::collections::HashSet::new();
                 for name in archive.file_names() {
@@ -118,9 +117,8 @@ impl ContainerFS {
             }
             ContainerFS::Zip(archive_path) => {
                 let file = std::fs::File::open(archive_path)?;
-                let mut archive = zip::ZipArchive::new(file).map_err(|e| {
-                    Error::Archive(format!("Failed to open archive: {}", e))
-                })?;
+                let mut archive = zip::ZipArchive::new(file)
+                    .map_err(|e| Error::Archive(format!("Failed to open archive: {}", e)))?;
 
                 let path_str = relative_path.to_string_lossy();
                 let mut entry = archive.by_name(&path_str).map_err(|e| {
@@ -137,9 +135,7 @@ impl ContainerFS {
     /// Read a file as string from the container.
     pub fn read_file_string(&self, relative_path: &Path) -> Result<String> {
         let bytes = self.read_file(relative_path)?;
-        String::from_utf8(bytes).map_err(|e| {
-            Error::Codec(format!("Invalid UTF-8 in file: {}", e))
-        })
+        String::from_utf8(bytes).map_err(|e| Error::Codec(format!("Invalid UTF-8 in file: {}", e)))
     }
 
     /// Write a file to the container (folder only).
@@ -168,9 +164,8 @@ impl ContainerFS {
             }
             ContainerFS::Zip(archive_path) => {
                 let file = std::fs::File::open(archive_path)?;
-                let archive = zip::ZipArchive::new(file).map_err(|e| {
-                    Error::Archive(format!("Failed to open archive: {}", e))
-                })?;
+                let archive = zip::ZipArchive::new(file)
+                    .map_err(|e| Error::Archive(format!("Failed to open archive: {}", e)))?;
                 let path_str = relative_path.to_string_lossy();
                 let exists = archive.file_names().any(|n| n == path_str.as_ref());
                 Ok(exists)
@@ -186,8 +181,7 @@ pub fn pack(source: &Path, dest: &Path) -> Result<()> {
 
     let file = std::fs::File::create(dest)?;
     let mut archive = zip::ZipWriter::new(file);
-    let options = FileOptions::default()
-        .compression_method(zip::CompressionMethod::Deflated);
+    let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
 
     fn add_dir(
         archive: &mut zip::ZipWriter<std::fs::File>,
@@ -202,14 +196,14 @@ pub fn pack(source: &Path, dest: &Path) -> Result<()> {
             let name = relative.to_string_lossy();
 
             if path.is_dir() {
-                archive.add_directory(format!("{}/", name), options).map_err(|e| {
-                    Error::Archive(format!("Failed to add directory: {}", e))
-                })?;
+                archive
+                    .add_directory(format!("{}/", name), options)
+                    .map_err(|e| Error::Archive(format!("Failed to add directory: {}", e)))?;
                 add_dir(archive, base, &path, options)?;
             } else {
-                archive.start_file(name.to_string(), options).map_err(|e| {
-                    Error::Archive(format!("Failed to start file: {}", e))
-                })?;
+                archive
+                    .start_file(name.to_string(), options)
+                    .map_err(|e| Error::Archive(format!("Failed to start file: {}", e)))?;
                 let data = std::fs::read(&path)?;
                 archive.write_all(&data)?;
             }
@@ -218,9 +212,9 @@ pub fn pack(source: &Path, dest: &Path) -> Result<()> {
     }
 
     add_dir(&mut archive, source, source, options)?;
-    archive.finish().map_err(|e| {
-        Error::Archive(format!("Failed to finish archive: {}", e))
-    })?;
+    archive
+        .finish()
+        .map_err(|e| Error::Archive(format!("Failed to finish archive: {}", e)))?;
 
     Ok(())
 }
@@ -228,14 +222,13 @@ pub fn pack(source: &Path, dest: &Path) -> Result<()> {
 /// Unpack a .zds archive into a folder.
 pub fn unpack(source: &Path, dest: &Path) -> Result<()> {
     let file = std::fs::File::open(source)?;
-    let mut archive = zip::ZipArchive::new(file).map_err(|e| {
-        Error::Archive(format!("Failed to open archive: {}", e))
-    })?;
+    let mut archive = zip::ZipArchive::new(file)
+        .map_err(|e| Error::Archive(format!("Failed to open archive: {}", e)))?;
 
     for i in 0..archive.len() {
-        let mut entry = archive.by_index(i).map_err(|e| {
-            Error::Archive(format!("Failed to read entry: {}", e))
-        })?;
+        let mut entry = archive
+            .by_index(i)
+            .map_err(|e| Error::Archive(format!("Failed to read entry: {}", e)))?;
 
         let outpath = dest.join(entry.name());
 

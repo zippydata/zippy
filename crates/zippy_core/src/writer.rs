@@ -1,7 +1,9 @@
 //! Buffered writer with crash-safe commits.
 
 use crate::{
-    index::DocIndexEntry, schema::SchemaRegistry, txlog::{JournalEntry, TransactionLog},
+    index::DocIndexEntry,
+    schema::SchemaRegistry,
+    txlog::{JournalEntry, TransactionLog},
     Error, IndexRegistry, Layout, Result,
 };
 use serde_json::Value;
@@ -64,8 +66,8 @@ impl BufferedWriter {
 
         // Load or create indexes
         let index = IndexRegistry::load(&root, &collection).unwrap_or_default();
-        let schema_registry = SchemaRegistry::load(&root, &collection)
-            .unwrap_or_else(|_| SchemaRegistry::new(false));
+        let schema_registry =
+            SchemaRegistry::load(&root, &collection).unwrap_or_else(|_| SchemaRegistry::new(false));
 
         // Open transaction log
         let journal = TransactionLog::open(&root, &collection)?;
@@ -251,8 +253,8 @@ impl SyncWriter {
         Layout::init_collection(&root, &collection)?;
 
         let index = IndexRegistry::load(&root, &collection).unwrap_or_default();
-        let schema_registry = SchemaRegistry::load(&root, &collection)
-            .unwrap_or_else(|_| SchemaRegistry::new(false));
+        let schema_registry =
+            SchemaRegistry::load(&root, &collection).unwrap_or_else(|_| SchemaRegistry::new(false));
         let journal = TransactionLog::open(&root, &collection)?;
 
         Ok(SyncWriter {

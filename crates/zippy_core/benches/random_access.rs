@@ -1,9 +1,9 @@
 //! Benchmarks for random access operations.
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use serde_json::json;
 use tempfile::TempDir;
-use zippy_core::{Engine, Layout, writer::BufferedWriter, WriteConfig};
+use zippy_core::{writer::BufferedWriter, Engine, Layout, WriteConfig};
 
 fn setup_benchmark_data(doc_count: usize) -> (TempDir, std::path::PathBuf) {
     let tmp = TempDir::new().unwrap();
@@ -37,19 +37,15 @@ fn bench_get_by_id(c: &mut Criterion) {
     for count in [1000, 10000].iter() {
         let (_tmp, root) = setup_benchmark_data(*count);
 
-        group.bench_with_input(
-            BenchmarkId::new("get_by_id", count),
-            count,
-            |b, count| {
-                let engine = Engine::open(&root, "bench").unwrap();
-                let mid = count / 2;
-                let doc_id = format!("doc{:06}", mid);
-                b.iter(|| {
-                    let doc = engine.get_document(&doc_id).unwrap();
-                    black_box(doc)
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("get_by_id", count), count, |b, count| {
+            let engine = Engine::open(&root, "bench").unwrap();
+            let mid = count / 2;
+            let doc_id = format!("doc{:06}", mid);
+            b.iter(|| {
+                let doc = engine.get_document(&doc_id).unwrap();
+                black_box(doc)
+            });
+        });
     }
 
     group.finish();
@@ -97,5 +93,10 @@ fn bench_random_batch(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, bench_get_by_id, bench_get_by_index, bench_random_batch);
+criterion_group!(
+    benches,
+    bench_get_by_id,
+    bench_get_by_index,
+    bench_random_batch
+);
 criterion_main!(benches);

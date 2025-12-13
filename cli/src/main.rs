@@ -172,13 +172,25 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Init { path, collection, strict } => {
+        Commands::Init {
+            path,
+            collection,
+            strict,
+        } => {
             cmd_init(&path, &collection, strict)?;
         }
-        Commands::Validate { path, collection, fix } => {
+        Commands::Validate {
+            path,
+            collection,
+            fix,
+        } => {
             cmd_validate(&path, collection.as_deref(), fix)?;
         }
-        Commands::Stats { path, collection, json } => {
+        Commands::Stats {
+            path,
+            collection,
+            json,
+        } => {
             cmd_stats(&path, collection.as_deref(), json)?;
         }
         Commands::Pack { source, dest } => {
@@ -190,16 +202,36 @@ fn main() -> Result<()> {
         Commands::List { path } => {
             cmd_list(&path)?;
         }
-        Commands::Get { path, collection, doc_id, pretty } => {
+        Commands::Get {
+            path,
+            collection,
+            doc_id,
+            pretty,
+        } => {
             cmd_get(&path, &collection, &doc_id, pretty)?;
         }
-        Commands::Put { path, collection, doc_id, data } => {
+        Commands::Put {
+            path,
+            collection,
+            doc_id,
+            data,
+        } => {
             cmd_put(&path, &collection, &doc_id, data)?;
         }
-        Commands::Delete { path, collection, doc_id } => {
+        Commands::Delete {
+            path,
+            collection,
+            doc_id,
+        } => {
             cmd_delete(&path, &collection, &doc_id)?;
         }
-        Commands::Scan { path, collection, limit, fields, jsonl } => {
+        Commands::Scan {
+            path,
+            collection,
+            limit,
+            fields,
+            jsonl,
+        } => {
             cmd_scan(&path, &collection, limit, fields, jsonl)?;
         }
         Commands::Reindex { path, collection } => {
@@ -267,7 +299,11 @@ fn cmd_validate(path: &PathBuf, collection: Option<&str>, fix: bool) -> Result<(
         let stored_index = IndexRegistry::load(path, coll).unwrap_or_default();
 
         if disk_index.len() != stored_index.len() {
-            println!("⚠ Index mismatch (disk: {}, stored: {})", disk_index.len(), stored_index.len());
+            println!(
+                "⚠ Index mismatch (disk: {}, stored: {})",
+                disk_index.len(),
+                stored_index.len()
+            );
             if fix {
                 disk_index.save(path, coll)?;
                 println!("    ✓ Index rebuilt");
@@ -313,7 +349,14 @@ fn cmd_stats(path: &PathBuf, collection: Option<&str>, json_output: bool) -> Res
             println!("  Documents:    {}", stats.doc_count);
             println!("  Schemas:      {}", stats.schema_count);
             println!("  Total size:   {} bytes", stats.total_size);
-            println!("  Mode:         {}", if stats.strict_mode { "strict" } else { "flexible" });
+            println!(
+                "  Mode:         {}",
+                if stats.strict_mode {
+                    "strict"
+                } else {
+                    "flexible"
+                }
+            );
             println!();
         }
     }
@@ -385,8 +428,8 @@ fn cmd_put(path: &PathBuf, collection: &str, doc_id: &str, data: Option<String>)
         }
     };
 
-    let doc: serde_json::Value = serde_json::from_str(&json_str)
-        .context("Invalid JSON document")?;
+    let doc: serde_json::Value =
+        serde_json::from_str(&json_str).context("Invalid JSON document")?;
 
     // Ensure store and collection exist
     if !path.exists() {
@@ -396,7 +439,10 @@ fn cmd_put(path: &PathBuf, collection: &str, doc_id: &str, data: Option<String>)
     let mut writer = SyncWriter::new(path, collection)?;
     writer.put(doc_id, &doc)?;
 
-    println!("✓ Document '{}' written to collection '{}'", doc_id, collection);
+    println!(
+        "✓ Document '{}' written to collection '{}'",
+        doc_id, collection
+    );
 
     Ok(())
 }
@@ -405,7 +451,10 @@ fn cmd_delete(path: &PathBuf, collection: &str, doc_id: &str) -> Result<()> {
     let mut writer = SyncWriter::new(path, collection)?;
     writer.delete(doc_id)?;
 
-    println!("✓ Document '{}' deleted from collection '{}'", doc_id, collection);
+    println!(
+        "✓ Document '{}' deleted from collection '{}'",
+        doc_id, collection
+    );
 
     Ok(())
 }
@@ -419,12 +468,11 @@ fn cmd_scan(
 ) -> Result<()> {
     let engine = Engine::open(path, collection)?;
 
-    let field_list: Option<Vec<String>> = fields.map(|f| {
-        f.split(',').map(|s| s.trim().to_string()).collect()
-    });
-    let field_refs: Option<Vec<&str>> = field_list.as_ref().map(|f| {
-        f.iter().map(|s| s.as_str()).collect()
-    });
+    let field_list: Option<Vec<String>> =
+        fields.map(|f| f.split(',').map(|s| s.trim().to_string()).collect());
+    let field_refs: Option<Vec<&str>> = field_list
+        .as_ref()
+        .map(|f| f.iter().map(|s| s.as_str()).collect());
 
     let mut scanner = engine.scan(None, field_refs.as_deref())?;
 

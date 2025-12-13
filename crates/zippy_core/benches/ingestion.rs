@@ -1,9 +1,12 @@
 //! Benchmarks for data ingestion.
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId, Throughput};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use serde_json::json;
 use tempfile::TempDir;
-use zippy_core::{Layout, writer::{BufferedWriter, SyncWriter, WriteConfig}};
+use zippy_core::{
+    writer::{BufferedWriter, SyncWriter, WriteConfig},
+    Layout,
+};
 
 fn bench_sync_write(c: &mut Criterion) {
     let mut group = c.benchmark_group("ingestion_sync");
@@ -11,31 +14,27 @@ fn bench_sync_write(c: &mut Criterion) {
     for count in [10, 100, 1000].iter() {
         group.throughput(Throughput::Elements(*count as u64));
 
-        group.bench_with_input(
-            BenchmarkId::new("sync_write", count),
-            count,
-            |b, &count| {
-                b.iter_with_setup(
-                    || {
-                        let tmp = TempDir::new().unwrap();
-                        let root = tmp.path().to_path_buf();
-                        Layout::init_root(&root).unwrap();
-                        (tmp, root)
-                    },
-                    |(_tmp, root)| {
-                        let mut writer = SyncWriter::new(&root, "bench").unwrap();
-                        for i in 0..count {
-                            let doc = json!({
-                                "id": i,
-                                "name": format!("user_{}", i),
-                            });
-                            writer.put(&format!("doc{:06}", i), &doc).unwrap();
-                        }
-                        black_box(())
-                    },
-                );
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("sync_write", count), count, |b, &count| {
+            b.iter_with_setup(
+                || {
+                    let tmp = TempDir::new().unwrap();
+                    let root = tmp.path().to_path_buf();
+                    Layout::init_root(&root).unwrap();
+                    (tmp, root)
+                },
+                |(_tmp, root)| {
+                    let mut writer = SyncWriter::new(&root, "bench").unwrap();
+                    for i in 0..count {
+                        let doc = json!({
+                            "id": i,
+                            "name": format!("user_{}", i),
+                        });
+                        writer.put(&format!("doc{:06}", i), &doc).unwrap();
+                    }
+                    black_box(())
+                },
+            );
+        });
     }
 
     group.finish();
@@ -126,5 +125,10 @@ fn bench_different_batch_sizes(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, bench_sync_write, bench_buffered_write, bench_different_batch_sizes);
+criterion_group!(
+    benches,
+    bench_sync_write,
+    bench_buffered_write,
+    bench_different_batch_sizes
+);
 criterion_main!(benches);

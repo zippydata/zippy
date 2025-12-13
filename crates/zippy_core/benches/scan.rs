@@ -1,9 +1,9 @@
 //! Benchmarks for sequential scanning.
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use serde_json::json;
 use tempfile::TempDir;
-use zippy_core::{Engine, Layout, writer::BufferedWriter, WriteConfig};
+use zippy_core::{writer::BufferedWriter, Engine, Layout, WriteConfig};
 
 fn setup_benchmark_data(doc_count: usize) -> (TempDir, std::path::PathBuf) {
     let tmp = TempDir::new().unwrap();
@@ -45,18 +45,14 @@ fn bench_full_scan(c: &mut Criterion) {
     for count in [100, 1000, 10000].iter() {
         let (_tmp, root) = setup_benchmark_data(*count);
 
-        group.bench_with_input(
-            BenchmarkId::new("full_scan", count),
-            count,
-            |b, _| {
-                let engine = Engine::open(&root, "bench").unwrap();
-                b.iter(|| {
-                    let mut scanner = engine.scan(None, None).unwrap();
-                    let docs: Vec<_> = scanner.collect();
-                    black_box(docs)
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("full_scan", count), count, |b, _| {
+            let engine = Engine::open(&root, "bench").unwrap();
+            b.iter(|| {
+                let mut scanner = engine.scan(None, None).unwrap();
+                let docs: Vec<_> = scanner.collect();
+                black_box(docs)
+            });
+        });
     }
 
     group.finish();
@@ -115,5 +111,10 @@ fn bench_filtered_scan(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, bench_full_scan, bench_projected_scan, bench_filtered_scan);
+criterion_group!(
+    benches,
+    bench_full_scan,
+    bench_projected_scan,
+    bench_filtered_scan
+);
 criterion_main!(benches);

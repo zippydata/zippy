@@ -144,9 +144,7 @@ impl IndexRegistry {
 
     /// Iterate over all entries.
     pub fn iter(&self) -> impl Iterator<Item = &DocIndexEntry> {
-        self.order
-            .iter()
-            .filter_map(|id| self.doc_index.get(id))
+        self.order.iter().filter_map(|id| self.doc_index.get(id))
     }
 
     /// Rebuild index from disk by scanning docs directory.

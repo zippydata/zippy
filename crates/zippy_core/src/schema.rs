@@ -1,9 +1,9 @@
 //! Schema registry and schema identity computation.
 
 use crate::{Codec, Error, Layout, Result};
+use blake3;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use blake3;
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Write};
 use std::path::Path;
@@ -46,7 +46,10 @@ impl SchemaRegistry {
         let strict = if manifest_path.exists() {
             let content = std::fs::read_to_string(&manifest_path)?;
             let manifest: Value = serde_json::from_str(&content)?;
-            manifest.get("strict").and_then(|v| v.as_bool()).unwrap_or(false)
+            manifest
+                .get("strict")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false)
         } else {
             false
         };

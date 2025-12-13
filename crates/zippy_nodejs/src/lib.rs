@@ -20,90 +20,111 @@ impl ZDSStore {
     pub fn open(root: String, collection: Option<String>, batch_size: Option<u32>) -> Result<Self> {
         let collection = collection.unwrap_or_else(|| "default".to_string());
         let batch_size = batch_size.unwrap_or(5000) as usize;
-        
+
         let store = FastStore::open(&root, &collection, batch_size)
             .map_err(|e| Error::from_reason(format!("Failed to open store: {}", e)))?;
-        
+
         Ok(ZDSStore {
             store: Mutex::new(store),
             root,
             collection,
         })
     }
-    
+
     /// Get document by ID.
     #[napi]
     pub fn get(&self, doc_id: String) -> Result<serde_json::Value> {
-        let store = self.store.lock()
+        let store = self
+            .store
+            .lock()
             .map_err(|e| Error::from_reason(format!("Lock error: {}", e)))?;
-        store.get(&doc_id)
+        store
+            .get(&doc_id)
             .map_err(|_| Error::from_reason(format!("Document not found: {}", doc_id)))
     }
-    
+
     /// Put a document.
     #[napi]
     pub fn put(&self, doc_id: String, doc: serde_json::Value) -> Result<()> {
-        let mut store = self.store.lock()
+        let mut store = self
+            .store
+            .lock()
             .map_err(|e| Error::from_reason(format!("Lock error: {}", e)))?;
-        store.put(doc_id, doc)
+        store
+            .put(doc_id, doc)
             .map_err(|e| Error::from_reason(format!("Write failed: {}", e)))
     }
-    
+
     /// Delete a document.
     #[napi]
     pub fn delete(&self, doc_id: String) -> Result<()> {
-        let mut store = self.store.lock()
+        let mut store = self
+            .store
+            .lock()
             .map_err(|e| Error::from_reason(format!("Lock error: {}", e)))?;
-        store.delete(&doc_id)
+        store
+            .delete(&doc_id)
             .map_err(|e| Error::from_reason(format!("Delete failed: {}", e)))
     }
-    
+
     /// Flush pending writes and refresh mmap.
     #[napi]
     pub fn flush(&self) -> Result<()> {
-        let mut store = self.store.lock()
+        let mut store = self
+            .store
+            .lock()
             .map_err(|e| Error::from_reason(format!("Lock error: {}", e)))?;
-        store.flush()
+        store
+            .flush()
             .map_err(|e| Error::from_reason(format!("Flush failed: {}", e)))?;
-        store.refresh_mmap()
+        store
+            .refresh_mmap()
             .map_err(|e| Error::from_reason(format!("Mmap refresh failed: {}", e)))
     }
-    
+
     /// Close the store and flush pending writes.
     #[napi]
     pub fn close(&self) -> Result<()> {
         self.flush()
     }
-    
+
     /// Write a complete JSONL blob (fastest bulk write path).
     /// jsonl_data: Pre-serialized JSONL with one JSON object per line.
     /// doc_ids: List of document IDs in order matching the lines.
     #[napi]
     pub fn write_jsonl(&self, jsonl_data: Buffer, doc_ids: Vec<String>) -> Result<u32> {
-        let mut store = self.store.lock()
+        let mut store = self
+            .store
+            .lock()
             .map_err(|e| Error::from_reason(format!("Lock error: {}", e)))?;
-        let count = store.write_jsonl_blob(&jsonl_data, &doc_ids)
+        let count = store
+            .write_jsonl_blob(&jsonl_data, &doc_ids)
             .map_err(|e| Error::from_reason(format!("Write failed: {}", e)))?;
         Ok(count as u32)
     }
-    
+
     /// Scan and return raw JSON bytes (fastest read path).
     #[napi]
     pub fn scan_raw(&self) -> Result<Vec<Buffer>> {
-        let store = self.store.lock()
+        let store = self
+            .store
+            .lock()
             .map_err(|e| Error::from_reason(format!("Lock error: {}", e)))?;
-        let raw = store.scan_raw()
+        let raw = store
+            .scan_raw()
             .map_err(|e| Error::from_reason(format!("Scan failed: {}", e)))?;
         Ok(raw.into_iter().map(|v| Buffer::from(v)).collect())
     }
-    
+
     /// Read entire JSONL file as a single buffer (fastest bulk read).
     /// Returns the raw JSONL content - caller splits and parses.
     #[napi]
     pub fn read_jsonl_blob(&self) -> Result<Buffer> {
-        let store = self.store.lock()
+        let store = self
+            .store
+            .lock()
             .map_err(|e| Error::from_reason(format!("Lock error: {}", e)))?;
-        
+
         // Get mmap data directly via the public method
         if let Some(data) = store.get_raw_data() {
             Ok(Buffer::from(data.to_vec()))
@@ -111,34 +132,40 @@ impl ZDSStore {
             Ok(Buffer::from(Vec::new()))
         }
     }
-    
+
     /// Get document count.
     #[napi(getter)]
     pub fn count(&self) -> u32 {
         self.store.lock().map(|s| s.len() as u32).unwrap_or(0)
     }
-    
+
     /// Check if document exists.
     #[napi]
     pub fn exists(&self, doc_id: String) -> bool {
-        self.store.lock().map(|s| s.exists(&doc_id)).unwrap_or(false)
+        self.store
+            .lock()
+            .map(|s| s.exists(&doc_id))
+            .unwrap_or(false)
     }
-    
+
     /// Scan all documents.
     #[napi]
     pub fn scan(&self) -> Result<Vec<serde_json::Value>> {
-        let store = self.store.lock()
+        let store = self
+            .store
+            .lock()
             .map_err(|e| Error::from_reason(format!("Lock error: {}", e)))?;
-        store.scan()
+        store
+            .scan()
             .map_err(|e| Error::from_reason(format!("Scan failed: {}", e)))
     }
-    
+
     /// List all document IDs.
     #[napi]
     pub fn list_doc_ids(&self) -> Vec<String> {
         self.store.lock().map(|s| s.doc_ids()).unwrap_or_default()
     }
-    
+
     /// Get store info.
     #[napi(getter)]
     pub fn info(&self) -> StoreInfo {
@@ -175,30 +202,36 @@ pub struct BulkWriter {
 impl BulkWriter {
     /// Create a new bulk writer.
     #[napi(factory)]
-    pub fn create(root: String, collection: Option<String>, batch_size: Option<u32>) -> Result<Self> {
+    pub fn create(
+        root: String,
+        collection: Option<String>,
+        batch_size: Option<u32>,
+    ) -> Result<Self> {
         let collection = collection.unwrap_or_else(|| "default".to_string());
         let batch_size = batch_size.unwrap_or(10000) as usize;
-        
+
         let store = FastStore::open(&root, &collection, batch_size)
             .map_err(|e| Error::from_reason(format!("Failed to create store: {}", e)))?;
-        
+
         Ok(BulkWriter { store })
     }
-    
+
     /// Put a document.
     #[napi]
     pub fn put(&mut self, doc_id: String, doc: serde_json::Value) -> Result<()> {
-        self.store.put(doc_id, doc)
+        self.store
+            .put(doc_id, doc)
             .map_err(|e| Error::from_reason(format!("Write failed: {}", e)))
     }
-    
+
     /// Flush pending writes.
     #[napi]
     pub fn flush(&mut self) -> Result<()> {
-        self.store.flush()
+        self.store
+            .flush()
             .map_err(|e| Error::from_reason(format!("Flush failed: {}", e)))
     }
-    
+
     /// Get current document count.
     #[napi(getter)]
     pub fn count(&self) -> u32 {

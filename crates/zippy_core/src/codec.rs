@@ -61,9 +61,9 @@ impl Codec {
 
     /// Extract specified fields from a document (projection).
     pub fn extract_fields(doc: &Value, fields: &[&str]) -> Result<Value> {
-        let _obj = doc.as_object().ok_or_else(|| {
-            Error::Codec("Cannot extract fields from non-object".to_string())
-        })?;
+        let _obj = doc
+            .as_object()
+            .ok_or_else(|| Error::Codec("Cannot extract fields from non-object".to_string()))?;
 
         let mut result = Map::new();
         for field in fields {
@@ -97,12 +97,8 @@ impl Codec {
                 let actual = Self::get_nested(doc, field);
                 Ok(actual == Some(expected))
             }
-            Predicate::Exists(field) => {
-                Ok(Self::get_nested(doc, field).is_some())
-            }
-            Predicate::NotExists(field) => {
-                Ok(Self::get_nested(doc, field).is_none())
-            }
+            Predicate::Exists(field) => Ok(Self::get_nested(doc, field).is_some()),
+            Predicate::NotExists(field) => Ok(Self::get_nested(doc, field).is_none()),
             Predicate::And(preds) => {
                 for p in preds {
                     if !Self::apply_predicate(doc, p)? {
@@ -175,10 +171,10 @@ mod tests {
     #[test]
     fn test_predicate_eq() {
         let doc = json!({"status": "active", "count": 5});
-        
+
         let pred = Predicate::eq("status", "active");
         assert!(Codec::apply_predicate(&doc, &pred).unwrap());
-        
+
         let pred = Predicate::eq("status", "inactive");
         assert!(!Codec::apply_predicate(&doc, &pred).unwrap());
     }
@@ -186,7 +182,7 @@ mod tests {
     #[test]
     fn test_predicate_exists() {
         let doc = json!({"name": "test"});
-        
+
         assert!(Codec::apply_predicate(&doc, &Predicate::exists("name")).unwrap());
         assert!(!Codec::apply_predicate(&doc, &Predicate::exists("missing")).unwrap());
     }
@@ -194,17 +190,11 @@ mod tests {
     #[test]
     fn test_predicate_and_or() {
         let doc = json!({"a": 1, "b": 2});
-        
-        let pred = Predicate::and(vec![
-            Predicate::eq("a", 1),
-            Predicate::eq("b", 2),
-        ]);
+
+        let pred = Predicate::and(vec![Predicate::eq("a", 1), Predicate::eq("b", 2)]);
         assert!(Codec::apply_predicate(&doc, &pred).unwrap());
-        
-        let pred = Predicate::or(vec![
-            Predicate::eq("a", 99),
-            Predicate::eq("b", 2),
-        ]);
+
+        let pred = Predicate::or(vec![Predicate::eq("a", 99), Predicate::eq("b", 2)]);
         assert!(Codec::apply_predicate(&doc, &pred).unwrap());
     }
 

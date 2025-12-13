@@ -16,8 +16,8 @@
 //! This is a stub implementation. Full implementation requires linking
 //! against DuckDB's C API headers.
 
-use zippy_core::{Engine, Scanner};
 use std::ffi::{c_char, c_void};
+use zippy_core::{Engine, Scanner};
 
 /// Extension version (must match DuckDB version for compatibility).
 pub const EXTENSION_VERSION: &str = "0.1.0";

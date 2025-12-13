@@ -1,10 +1,10 @@
 //! Transaction log for crash-safe writes.
 
-use crate::{Layout, Result, Error};
+use crate::{Error, Layout, Result};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::io::{BufRead, BufReader, Write};
 use std::path::Path;
-use chrono::{DateTime, Utc};
 
 /// Journal entry types.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -28,9 +28,7 @@ pub enum JournalEntry {
         batch_id: u64,
     },
     #[serde(rename = "CHECKPOINT")]
-    Checkpoint {
-        timestamp: DateTime<Utc>,
-    },
+    Checkpoint { timestamp: DateTime<Utc> },
 }
 
 impl JournalEntry {
@@ -170,9 +168,8 @@ impl TransactionLog {
                 continue;
             }
 
-            let entry: JournalEntry = serde_json::from_str(&line).map_err(|e| {
-                Error::JournalCorrupted(format!("Invalid entry: {} ({})", line, e))
-            })?;
+            let entry: JournalEntry = serde_json::from_str(&line)
+                .map_err(|e| Error::JournalCorrupted(format!("Invalid entry: {} ({})", line, e)))?;
 
             match entry {
                 JournalEntry::Commit { .. } | JournalEntry::Checkpoint { .. } => {
@@ -239,8 +236,10 @@ mod tests {
         let mut log = TransactionLog::open(root, "test").unwrap();
 
         // Write some entries
-        log.append(&JournalEntry::put("doc1", "schema1", 100)).unwrap();
-        log.append(&JournalEntry::put("doc2", "schema1", 200)).unwrap();
+        log.append(&JournalEntry::put("doc1", "schema1", 100))
+            .unwrap();
+        log.append(&JournalEntry::put("doc2", "schema1", 200))
+            .unwrap();
 
         // Before commit, entries are uncommitted
         let uncommitted = log.get_uncommitted().unwrap();
@@ -262,8 +261,10 @@ mod tests {
         // Simulate crash: write entries but don't commit
         {
             let mut log = TransactionLog::open(root, "test").unwrap();
-            log.append(&JournalEntry::put("doc1", "schema1", 100)).unwrap();
-            log.append(&JournalEntry::put("doc2", "schema1", 200)).unwrap();
+            log.append(&JournalEntry::put("doc1", "schema1", 100))
+                .unwrap();
+            log.append(&JournalEntry::put("doc2", "schema1", 200))
+                .unwrap();
             // No commit - simulating crash
         }
 
