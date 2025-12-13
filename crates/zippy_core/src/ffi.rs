@@ -205,13 +205,14 @@ pub unsafe extern "C" fn zds_scan_next(scanner: *mut ZdsScanner) -> *mut c_char 
         return ptr::null_mut();
     }
 
-    match (*scanner).0.next() {
+    match (*scanner).0.next_doc() {
         Ok(Some(doc)) => {
             let json = serde_json::to_string(&doc).unwrap_or_default();
             CString::new(json)
                 .map(|s| s.into_raw())
                 .unwrap_or(ptr::null_mut())
         }
+        Ok(None) => ptr::null_mut(),
         _ => ptr::null_mut(),
     }
 }

@@ -123,10 +123,10 @@ impl TransactionLog {
             if line.trim().is_empty() {
                 continue;
             }
-            if let Ok(entry) = serde_json::from_str::<JournalEntry>(&line) {
-                if let JournalEntry::Commit { batch_id, .. } = entry {
-                    max_batch_id = max_batch_id.max(batch_id);
-                }
+            if let Ok(JournalEntry::Commit { batch_id, .. }) =
+                serde_json::from_str::<JournalEntry>(&line)
+            {
+                max_batch_id = max_batch_id.max(batch_id);
             }
         }
 

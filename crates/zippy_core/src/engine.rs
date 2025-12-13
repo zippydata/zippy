@@ -189,7 +189,7 @@ impl Scanner {
     }
 
     /// Get the next document matching the predicate.
-    pub fn next(&mut self) -> Result<Option<Value>> {
+    pub fn next_doc(&mut self) -> Result<Option<Value>> {
         while self.current_idx < self.doc_ids.len() {
             let doc_id = &self.doc_ids[self.current_idx].clone();
             self.current_idx += 1;
@@ -225,7 +225,7 @@ impl Scanner {
     /// Collect all remaining documents.
     pub fn collect(&mut self) -> Result<Vec<Value>> {
         let mut docs = Vec::new();
-        while let Some(doc) = self.next()? {
+        while let Some(doc) = self.next_doc()? {
             docs.push(doc);
         }
         Ok(docs)
@@ -246,7 +246,7 @@ impl Iterator for Scanner {
     type Item = Result<Value>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        match Scanner::next(self) {
+        match self.next_doc() {
             Ok(Some(doc)) => Some(Ok(doc)),
             Ok(None) => None,
             Err(e) => Some(Err(e)),
