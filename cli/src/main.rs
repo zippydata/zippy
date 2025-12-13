@@ -483,7 +483,7 @@ fn cmd_scan(
         println!("[");
     }
 
-    while let Some(doc) = scanner.next()? {
+    while let Some(doc) = scanner.next().transpose()? {
         if count >= max {
             break;
         }

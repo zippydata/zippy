@@ -230,7 +230,7 @@ mod engine {
         let engine = Engine::open(&root, "test")?;
 
         let pred = zippy_core::Predicate::eq("category", "A");
-        let mut scanner = engine.scan(Some(&pred), None)?;
+        let scanner = engine.scan(Some(&pred), None)?;
         let docs: Vec<serde_json::Value> = scanner.collect::<Result<Vec<_>>>()?;
 
         assert_eq!(docs.len(), 2);
@@ -250,7 +250,7 @@ mod engine {
 
         let engine = Engine::open(&root, "test")?;
 
-        let mut scanner = engine.scan(None, Some(&["name", "age"]))?;
+        let scanner = engine.scan(None, Some(&["name", "age"]))?;
         let docs: Vec<serde_json::Value> = scanner.collect::<Result<Vec<_>>>()?;
 
         assert_eq!(docs.len(), 1);
@@ -356,7 +356,7 @@ mod cross_component {
 
         // Read with Engine (should see SyncWriter docs)
         let engine = Engine::open(&root, "cross")?;
-        assert!(engine.len() >= 1);
+        assert!(!engine.is_empty());
 
         Ok(())
     }
