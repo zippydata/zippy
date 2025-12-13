@@ -2,7 +2,7 @@
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use zippy_core::{
     container::{pack, unpack},
     engine::Engine,
@@ -364,7 +364,7 @@ fn cmd_stats(path: &PathBuf, collection: Option<&str>, json_output: bool) -> Res
     Ok(())
 }
 
-fn cmd_pack(source: &PathBuf, dest: &PathBuf) -> Result<()> {
+fn cmd_pack(source: &Path, dest: &Path) -> Result<()> {
     println!("Packing {} → {}", source.display(), dest.display());
 
     Layout::validate(source).context("Invalid source store")?;
@@ -376,7 +376,7 @@ fn cmd_pack(source: &PathBuf, dest: &PathBuf) -> Result<()> {
     Ok(())
 }
 
-fn cmd_unpack(source: &PathBuf, dest: &PathBuf) -> Result<()> {
+fn cmd_unpack(source: &Path, dest: &Path) -> Result<()> {
     println!("Unpacking {} → {}", source.display(), dest.display());
 
     unpack(source, dest).context("Failed to unpack archive")?;
@@ -510,7 +510,7 @@ fn cmd_scan(
     Ok(())
 }
 
-fn cmd_reindex(path: &PathBuf, collection: &str) -> Result<()> {
+fn cmd_reindex(path: &Path, collection: &str) -> Result<()> {
     println!("Rebuilding index for collection '{}'...", collection);
 
     let index = IndexRegistry::rebuild(path, collection)?;
