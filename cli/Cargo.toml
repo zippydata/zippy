@@ -1,0 +1,17 @@
+[package]
+name = "zippy_cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "CLI for ZDS (Zippy Data System)"
+
+[[bin]]
+name = "zippy"
+path = "src/main.rs"
+
+[dependencies]
+zippy_core.workspace = true
+clap = { version = "4", features = ["derive"] }
+serde_json.workspace = true
+anyhow.workspace = true

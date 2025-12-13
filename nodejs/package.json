@@ -1,0 +1,70 @@
+{
+  "name": "@zippydata/core",
+  "version": "0.1.0",
+  "description": "High-performance dataset storage for Node.js with native Rust bindings",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "napi": {
+    "name": "zippy-core",
+    "cargoManifestPath": "../crates/zippy_nodejs/Cargo.toml",
+    "triples": {
+      "defaults": true,
+      "additional": [
+        "aarch64-apple-darwin",
+        "x86_64-apple-darwin",
+        "x86_64-unknown-linux-gnu",
+        "aarch64-unknown-linux-gnu",
+        "x86_64-pc-windows-msvc"
+      ]
+    }
+  },
+  "scripts": {
+    "build": "napi build --platform --release --cargo-cwd ../crates/zippy_nodejs",
+    "build:debug": "napi build --platform --cargo-cwd ../crates/zippy_nodejs",
+    "prepublishOnly": "napi prepublish -t npm",
+    "test": "jest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext .ts,.js",
+    "lint:fix": "eslint . --ext .ts,.js --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "files": [
+    "dist",
+    "*.node"
+  ],
+  "keywords": [
+    "dataset",
+    "storage",
+    "ml",
+    "machine-learning",
+    "native",
+    "rust",
+    "json",
+    "jsonl"
+  ],
+  "author": "Omar Kamali <zippy@omarkama.li>",
+  "license": "MIT",
+  "homepage": "https://zippydata.org",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zippydata/zippy.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zippydata/zippy/issues"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^2.18.0",
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.56.0",
+    "jest": "^29.7.0",
+    "prettier": "^3.2.0",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">= 16"
+  }
+}

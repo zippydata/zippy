@@ -1,0 +1,40 @@
+[workspace]
+members = [
+    "crates/zippy_core",
+    "crates/zippy_duckdb",
+    "crates/zippy_python",
+    "crates/zippy_nodejs",
+    "cli"
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Omar Kamali <zippy@omarkama.li>"]
+license = "MIT"
+homepage = "https://zippydata.org"
+repository = "https://github.com/zippydata/zippy"
+documentation = "https://zippydata.org/docs"
+description = "High-performance, multi-language dataset storage format"
+keywords = ["dataset", "storage", "ml", "ai", "json"]
+categories = ["data-structures", "database", "encoding"]
+
+[workspace.dependencies]
+zippy_core = { path = "crates/zippy_core" }
+# Serialization - pinned to stable versions
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
+# Error handling
+thiserror = "1.0.69"
+anyhow = "1.0.98"
+# Archive handling - deflate only, no vulnerable features
+zip = { version = "0.6.6", default-features = false, features = ["deflate"] }
+# Temp files - secure temp directory handling
+tempfile = "3.19"
+# Hashing - cryptographically secure
+blake3 = "1.5.5"
+# Language bindings
+pyo3 = { version = "0.22.7", features = ["extension-module"] }
+napi = { version = "2.16", features = ["napi4", "serde-json"] }
+napi-derive = "2.16"

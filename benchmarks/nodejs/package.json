@@ -1,0 +1,14 @@
+{
+  "name": "zippy-nodejs-benchmarks",
+  "version": "1.0.0",
+  "description": "Node.js storage benchmarks for ZDS - comparing disk-backed solutions",
+  "scripts": {
+    "benchmark": "node benchmark_io.js",
+    "benchmark:10k": "node benchmark_io.js -n=10000",
+    "benchmark:100k": "node benchmark_io.js -n=100000"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.0.0",
+    "classic-level": "^1.4.1"
+  }
+}

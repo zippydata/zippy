@@ -1,0 +1,85 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "zippy-data"
+version = "0.1.0"
+description = "High-performance, multi-language dataset storage format"
+readme = "README.md"
+license = {text = "Apache-2.0 OR MIT"}
+authors = [
+    {name = "Omneity Labs", email = "zippy@omarkama.li"}
+]
+requires-python = ">=3.9"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Rust",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+keywords = ["dataset", "storage", "ml", "ai", "huggingface"]
+
+[project.optional-dependencies]
+pandas = ["pandas>=1.0"]
+arrow = ["pyarrow>=10.0"]
+duckdb = ["duckdb>=0.8"]
+hf = ["datasets>=2.0"]
+all = ["pandas>=1.0", "pyarrow>=10.0", "duckdb>=0.8", "datasets>=2.0"]
+dev = ["pytest>=7.0", "pytest-cov", "mypy", "ruff", "datasets>=2.0"]
+
+[project.urls]
+Homepage = "https://zippydata.org"
+Repository = "https://github.com/zippydata/zippy"
+Documentation = "https://zippydata.org/docs"
+
+[tool.maturin]
+module-name = "zippy._core"
+python-packages = ["zippy"]
+features = ["pyo3/extension-module"]
+manifest-path = "../crates/zippy_python/Cargo.toml"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "B008",   # do not perform function calls in argument defaults
+    "B905",   # zip strict
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["zippy"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false

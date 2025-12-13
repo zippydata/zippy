@@ -1,0 +1,45 @@
+[package]
+name = "zippy_core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Core engine for ZDS (Zippy Data System)"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+zip.workspace = true
+tempfile.workspace = true
+blake3.workspace = true
+chrono = { version = "0.4", features = ["serde"] }
+memmap2 = "0.9"
+rayon = "1.10"
+simd-json = "0.14"
+memchr = "2.7"                    # SIMD newline search
+rustc-hash = "2.0"                # FxHashMap - faster hashing
+
+[dev-dependencies]
+criterion = "0.5"
+tempfile.workspace = true
+rusqlite = { version = "0.31", features = ["bundled"] }
+sled = "0.34"
+rand = "0.8"
+
+[[bench]]
+name = "scan"
+harness = false
+
+[[bench]]
+name = "random_access"
+harness = false
+
+[[bench]]
+name = "ingestion"
+harness = false
+
+[[bench]]
+name = "comparison"
+harness = false

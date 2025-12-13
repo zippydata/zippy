@@ -1,0 +1,66 @@
+# ZDS Documentation Site
+title: Zippy Data System
+description: A human-readable, schema-flexible document store for modern data workflows
+url: "https://zippydata.org"
+baseurl: ""
+
+# Theme
+remote_theme: just-the-docs/just-the-docs
+color_scheme: zippy
+
+# Repository
+github_username: zippydata
+repository: zippydata/zippy
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+# Navigation
+nav_enabled: true
+nav_sort: case_sensitive
+
+# Footer
+footer_content: 'ZDS is open source under the MIT License. <a href="https://github.com/zippydata/zippy">View on GitHub</a>'
+
+# Collections
+collections:
+  docs:
+    output: true
+    permalink: /:collection/:name
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "docs"
+    values:
+      layout: "default"
+      nav_order: 1
+
+# Exclude from build
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules/
+  - vendor/
+
+# Compress HTML
+compress_html:
+  clippings: all
+  comments: all
+  endings: all
+  blanklines: false
+
+# Search
+search_enabled: true
+search:
+  heading_level: 2
+  previews: 3
+  preview_words_before: 5
+  preview_words_after: 10
+  tokenizer_separator: /[\s/]+/
+  rel_url: true
+  button: false

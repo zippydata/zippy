@@ -1,0 +1,194 @@
+{
+  "name": "zippy-zds",
+  "displayName": "Zippy ZDS Editor",
+  "description": "View and edit ZDS (Zippy Data System) files and collections",
+  "version": "0.1.0",
+  "publisher": "zippy",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Data Science",
+    "Other"
+  ],
+  "keywords": [
+    "zds",
+    "zippy",
+    "dataset",
+    "json",
+    "data"
+  ],
+  "icon": "media/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zippydata/zippy"
+  },
+  "activationEvents": [
+    "workspaceContains:**/manifest.json",
+    "onView:zdsExplorer"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "zds.openCollection",
+        "title": "Open ZDS Collection",
+        "category": "ZDS"
+      },
+      {
+        "command": "zds.createCollection",
+        "title": "Create ZDS Collection",
+        "category": "ZDS"
+      },
+      {
+        "command": "zds.refreshExplorer",
+        "title": "Refresh ZDS Explorer",
+        "category": "ZDS",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "zds.addDocument",
+        "title": "Add Document",
+        "category": "ZDS",
+        "icon": "$(add)"
+      },
+      {
+        "command": "zds.editDocument",
+        "title": "Edit Document",
+        "category": "ZDS",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "zds.deleteDocument",
+        "title": "Delete Document",
+        "category": "ZDS",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "zds.viewDocument",
+        "title": "View Document",
+        "category": "ZDS",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "zds.exportCollection",
+        "title": "Export Collection to JSON",
+        "category": "ZDS"
+      },
+      {
+        "command": "zds.importToCollection",
+        "title": "Import JSON to Collection",
+        "category": "ZDS"
+      },
+      {
+        "command": "zds.validateStore",
+        "title": "Validate ZDS Store",
+        "category": "ZDS"
+      },
+      {
+        "command": "zds.showStats",
+        "title": "Show Collection Statistics",
+        "category": "ZDS"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "zds-explorer",
+          "title": "ZDS Explorer",
+          "icon": "$(database)"
+        }
+      ]
+    },
+    "views": {
+      "zds-explorer": [
+        {
+          "id": "zdsExplorer",
+          "name": "Collections",
+          "contextualTitle": "ZDS Collections"
+        },
+        {
+          "id": "zdsDocuments",
+          "name": "Documents",
+          "contextualTitle": "Documents"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "zds.refreshExplorer",
+          "when": "view == zdsExplorer",
+          "group": "navigation"
+        },
+        {
+          "command": "zds.addDocument",
+          "when": "view == zdsDocuments",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "zds.viewDocument",
+          "when": "view == zdsDocuments",
+          "group": "inline"
+        },
+        {
+          "command": "zds.editDocument",
+          "when": "view == zdsDocuments",
+          "group": "inline"
+        },
+        {
+          "command": "zds.deleteDocument",
+          "when": "view == zdsDocuments"
+        },
+        {
+          "command": "zds.showStats",
+          "when": "view == zdsExplorer"
+        },
+        {
+          "command": "zds.exportCollection",
+          "when": "view == zdsExplorer"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "ZDS",
+      "properties": {
+        "zds.defaultStorePath": {
+          "type": "string",
+          "default": "",
+          "description": "Default path to ZDS store"
+        },
+        "zds.autoRefresh": {
+          "type": "boolean",
+          "default": true,
+          "description": "Auto-refresh explorer on file changes"
+        },
+        "zds.jsonIndent": {
+          "type": "number",
+          "default": 2,
+          "description": "JSON indentation for document display"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "eslint": "^8.54.0",
+    "typescript": "^5.3.0",
+    "@vscode/vsce": "^2.22.0"
+  }
+}

@@ -1,0 +1,22 @@
+[package]
+name = "zippy_nodejs"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Node.js bindings for ZDS (Zippy Data System)"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+zippy_core.workspace = true
+napi = { version = "2", features = ["napi4", "serde-json"] }
+napi-derive = "2"
+serde_json.workspace = true
+
+[build-dependencies]
+napi-build = "2.1"
+
+[profile.release]
+lto = true

@@ -1,0 +1,19 @@
+[package]
+name = "zippy_python"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Python bindings for ZDS (Zippy Data System)"
+
+[lib]
+name = "_zippy_core"
+crate-type = ["cdylib"]
+
+[dependencies]
+zippy_core.workspace = true
+pyo3 = { version = "0.22", features = ["extension-module"] }
+serde_json.workspace = true
+
+[build-dependencies]
+pyo3-build-config = "0.22"
