@@ -95,15 +95,14 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       
       - name: Install dependencies and build
+        working-directory: nodejs
         run: |
-          cd crates/zippy_nodejs
           npm install
           npm run build
       
       - name: Run tests
-        run: |
-          cd crates/zippy_nodejs
-          npm test
+        working-directory: nodejs
+        run: npm test
         continue-on-error: true  # Tests may not exist yet
 
   # Build check for all platforms
