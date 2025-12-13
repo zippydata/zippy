@@ -59,19 +59,26 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
       
+      - name: Create virtualenv
+        run: python -m venv .venv
+      
       - name: Install maturin
-        run: pip install maturin pytest
+        run: .venv/bin/pip install maturin pytest
       
       - name: Build native module
         run: |
+          source .venv/bin/activate
           cd crates/zippy_python
           maturin develop
       
       - name: Install Python package
-        run: pip install -e "python/[dev]"
+        run: |
+          source .venv/bin/activate
+          pip install -e "python/[dev]"
       
       - name: Run Python tests
         run: |
+          source .venv/bin/activate
           cd python
           pytest -v
 
