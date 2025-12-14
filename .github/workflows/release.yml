@@ -172,8 +172,8 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
       
-      - name: Publish zippy-data
-        run: cargo publish -p zippy-data --allow-dirty
+      - name: Publish zippy_data
+        run: cargo publish -p zippy_data --allow-dirty
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_TOKEN }}
         continue-on-error: true  # May fail if already published
