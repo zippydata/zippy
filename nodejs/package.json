@@ -1,6 +1,6 @@
 {
   "name": "@zippydata/core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "High-performance dataset storage for Node.js with native Rust bindings",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
