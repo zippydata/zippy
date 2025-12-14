@@ -1,11 +1,12 @@
 # ZDS Documentation Site
-title: Zippy Data System
+title: Zippy
 description: A human-readable, schema-flexible document store for modern data workflows
 url: "https://zippydata.org"
 baseurl: ""
+logo: "/assets/images/z.png"
 
 # Theme
-remote_theme: just-the-docs/just-the-docs
+theme: just-the-docs
 color_scheme: zippy
 
 # Repository
@@ -23,7 +24,19 @@ nav_enabled: true
 nav_sort: case_sensitive
 
 # Footer
-footer_content: 'ZDS is open source under the MIT License. <a href="https://github.com/zippydata/zippy">View on GitHub</a>'
+footer_content: '© 2024 MIT License · <a href="https://omarkamali.com">Omar Kamali</a>'
+
+# Aux links (top right)
+aux_links:
+  "GitHub":
+    - "https://github.com/zippydata/zippy"
+aux_links_new_tab: true
+
+# External nav links
+nav_external_links:
+  - title: Technical Paper
+    url: https://github.com/zippydata/zippy/blob/master/PAPER.md
+    hide_icon: false
 
 # Collections
 collections:

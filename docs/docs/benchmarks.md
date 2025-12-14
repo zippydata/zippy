@@ -1,8 +1,7 @@
 ---
 layout: default
 title: Benchmarks
-parent: Documentation
-nav_order: 7
+nav_order: 8
 ---
 
 # Benchmarks
@@ -215,7 +214,7 @@ Each record is ~200 bytes with mixed types:
 - **ZDS** benefits from OS page cache for mmap reads
 - **HuggingFace Datasets** uses Arrow, optimized for sequential iteration
 
-See [BENCHMARK.md](https://github.com/zippydata/zippy/blob/main/BENCHMARK.md) for complete methodology.
+See [BENCHMARK.md](https://github.com/zippydata/zippy/blob/master/BENCHMARK.md) for complete methodology.
 
 ---
 

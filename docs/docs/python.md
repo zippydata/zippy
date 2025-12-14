@@ -1,13 +1,22 @@
 ---
 layout: default
 title: Python Guide
-parent: Documentation
-nav_order: 2
+nav_order: 3
 ---
 
 # Python Guide
+{: .no_toc }
 
-Complete guide to using ZDS with Python.
+The Python SDK is the most feature-complete way to work with ZDS. It provides a familiar API for data scientists and ML engineers, with first-class support for HuggingFace, Pandas, and DuckDB.
+
+<details open markdown="block">
+  <summary>Table of contents</summary>
+  {: .text-delta }
+1. TOC
+{:toc}
+</details>
+
+---
 
 ## Installation
 
@@ -15,371 +24,584 @@ Complete guide to using ZDS with Python.
 pip install zippy-data
 ```
 
-For optional integrations:
+Install with optional integrations based on your workflow:
+
 ```bash
-pip install zippy-data[pandas]    # DataFrame support
-pip install zippy-data[duckdb]    # SQL queries
-pip install zippy-data[hf]        # HuggingFace conversion
-pip install zippy-data[all]       # Everything
-```
+# DataFrame support
+pip install zippy-data[pandas]
 
-## Quick Reference
+# SQL queries with DuckDB
+pip install zippy-data[duckdb]
 
-```python
-from zippy import (
-    # Stores
-    ZDSStore,           # Standard store
-    FastZDSStore,       # High-performance JSONL store
-    
-    # Datasets
-    ZDataset,           # Map-style (random access)
-    ZIterableDataset,   # Streaming (memory efficient)
-    
-    # Remote loading
-    load_remote,        # Load from GitHub, local path, etc.
-    
-    # HuggingFace
-    from_hf, to_hf,     # Convert to/from HF Dataset
-    
-    # Pandas
-    read_zds, to_zds,   # DataFrame conversion
-    
-    # DuckDB
-    query_zds,          # SQL queries
-    register_zds,       # Register in DuckDB connection
-)
+# HuggingFace Dataset conversion
+pip install zippy-data[hf]
+
+# Everything
+pip install zippy-data[all]
 ```
 
 ---
 
-## ZDSStore
+## Core Concepts
 
-The primary interface for document operations.
+ZDS organizes data into **stores** and **collections**:
+
+```
+my_dataset/                    # Store (root directory)
+├── collections/
+│   ├── train/                 # Collection
+│   │   └── meta/
+│   │       ├── data.jsonl     # Your documents
+│   │       └── index.bin      # O(1) lookup index
+│   └── test/                  # Another collection
+│       └── meta/
+│           └── data.jsonl
+```
+
+- **Store**: A directory containing one or more collections
+- **Collection**: A named group of documents (like `train`, `test`, `validation`)
+- **Document**: A JSON object with a unique ID
+
+---
+
+## Working with Stores
 
 ### Opening a Store
 
 ```python
 from zippy import ZDSStore
 
-# Create or open a store
-store = ZDSStore.open(
-    path="./my_data",           # Directory path
-    collection="train",         # Collection name
-    strict=False,               # Schema enforcement (default: flexible)
-)
+# Create or open a store with a collection
+store = ZDSStore.open("./my_dataset", collection="train")
 
-# Context manager (auto-close)
-with ZDSStore.open("./data", "train") as store:
-    store.put("doc1", {"text": "hello"})
+# Use context manager for automatic cleanup
+with ZDSStore.open("./my_dataset", "train") as store:
+    store.put("doc_001", {"text": "Hello world"})
+    # Store is automatically closed when exiting the block
 ```
 
-### CRUD Operations
+### Adding Documents
+
+Every document needs a unique ID. The document itself can be any JSON-serializable dict:
 
 ```python
-# Put (create or update)
-store.put("doc_001", {"text": "Hello", "label": 1})
-store.put("doc_002", {"text": "World", "tags": ["a", "b"]})
+# Simple document
+store.put("user_001", {
+    "name": "Alice",
+    "email": "alice@example.com"
+})
 
+# Complex nested structure
+store.put("article_001", {
+    "title": "Introduction to ZDS",
+    "content": "ZDS is a human-readable document store...",
+    "metadata": {
+        "author": "Alice",
+        "tags": ["tutorial", "beginner"],
+        "published": True
+    },
+    "stats": {
+        "views": 1542,
+        "likes": 89
+    }
+})
+
+# Schema-flexible: each document can have different fields
+store.put("article_002", {
+    "title": "Advanced ZDS Patterns",
+    "content": "...",
+    "metadata": {
+        "author": "Bob",
+        "tags": ["advanced"],
+        "co_authors": ["Charlie", "Diana"]  # New field!
+    }
+})
+```
+
+### Retrieving Documents
+
+```python
 # Get by ID
-doc = store.get("doc_001")
-print(doc)  # {"text": "Hello", "label": 1}
+doc = store.get("article_001")
+print(doc["title"])  # "Introduction to ZDS"
 
 # Dict-style access
-store["doc_003"] = {"text": "New doc"}
-print(store["doc_003"])
+doc = store["article_001"]
 
-# Check existence
-if "doc_001" in store:
+# Check if document exists
+if "article_001" in store:
     print("Found!")
 
+# Get with default (returns None if not found)
+doc = store.get("nonexistent")  # Returns None
+```
+
+### Updating and Deleting
+
+```python
+# Update (put with same ID replaces the document)
+store.put("user_001", {
+    "name": "Alice",
+    "email": "alice@newdomain.com",  # Updated
+    "verified": True                  # New field
+})
+
 # Delete
-store.delete("doc_002")
+store.delete("user_001")
 
-# Count
-print(len(store))  # Number of documents
+# Bulk delete
+for doc_id in ["temp_001", "temp_002", "temp_003"]:
+    store.delete(doc_id)
 ```
 
-### Scanning
+### Scanning Documents
 
 ```python
-# Scan all documents
+# Iterate all documents
 for doc in store.scan():
-    print(doc)
+    print(doc["_id"], doc["title"])
 
-# With projection (only specific fields)
-for doc in store.scan(fields=["text", "label"]):
-    print(doc)  # Only contains text and label
+# Project specific fields (more efficient for large documents)
+for doc in store.scan(fields=["title", "metadata.author"]):
+    print(doc)  # Only contains _id, title, and metadata.author
 
-# With predicate (filter)
-for doc in store.scan(predicate={"label": 1}):
-    print(doc)  # Only label=1 documents
+# Count documents
+print(f"Total documents: {len(store)}")
 
-# List all document IDs
-ids = store.list_doc_ids()
-```
-
-### Strict Mode
-
-Enforce consistent schemas:
-
-```python
-# Enable strict mode
-store = ZDSStore.open("./data", "products", strict=True)
-
-# First document defines the schema
-store.put("prod_001", {"name": "Widget", "price": 9.99})
-
-# Same schema works
-store.put("prod_002", {"name": "Gadget", "price": 19.99})
-
-# Different schema fails!
-try:
-    store.put("prod_003", {"title": "Thing", "cost": 5.99})
-except ValueError as e:
-    print(f"Schema mismatch: {e}")
+# Get all document IDs
+all_ids = store.list_doc_ids()
 ```
 
 ---
 
-## ZDataset
+## ML Datasets
 
-HuggingFace-compatible map-style dataset with random access.
+ZDS provides two dataset classes that mirror the HuggingFace Dataset API:
 
-### Creating a Dataset
+| Class | Use Case | Memory | Random Access |
+|-------|----------|--------|---------------|
+| `ZDataset` | Small-medium datasets | Loads index | Yes |
+| `ZIterableDataset` | Large datasets | Streaming | No |
+
+### ZDataset (Map-Style)
+
+Best for datasets that fit in memory or when you need random access:
 
 ```python
-from zippy import ZDataset, ZDSStore
+from zippy import ZDataset
 
-# From store
-store = ZDSStore.open("./data", "train")
-dataset = ZDataset(store)
+# Create from store path
+dataset = ZDataset.from_store("./my_dataset", collection="train")
 
-# Or directly
-dataset = ZDataset.from_store("./data", collection="train")
+# Length and indexing
+print(len(dataset))      # 10000
+print(dataset[0])        # First document
+print(dataset[-1])       # Last document
+print(dataset[100:110])  # Slice (returns new ZDataset)
 ```
 
-### Indexing and Slicing
+#### Transformations
+
+All transformations return new datasets (immutable):
 
 ```python
-# Length
-print(len(dataset))  # 1000
-
-# Index access
-first = dataset[0]
-last = dataset[-1]
-
-# Slicing
-subset = dataset[10:20]   # Returns new ZDataset
-every_10th = dataset[::10]
-```
-
-### Transformations
-
-```python
-# Shuffle (returns new dataset)
+# Shuffle with reproducible seed
 shuffled = dataset.shuffle(seed=42)
 
-# Filter
+# Filter documents
 positive = dataset.filter(lambda x: x["label"] == 1)
+long_texts = dataset.filter(lambda x: len(x["text"]) > 100)
 
-# Map
-def add_length(doc):
-    return {**doc, "length": len(doc["text"])}
+# Transform documents
+def preprocess(doc):
+    return {
+        **doc,
+        "text_lower": doc["text"].lower(),
+        "word_count": len(doc["text"].split())
+    }
 
-with_length = dataset.map(add_length)
+processed = dataset.map(preprocess)
 
 # Select specific indices
-selected = dataset.select([0, 5, 10, 15])
+subset = dataset.select([0, 10, 20, 30, 40])
 
 # Take first N
-first_100 = dataset.take(100)
-
-# Chain operations
-result = (
-    dataset
-    .filter(lambda x: x["score"] > 0.5)
-    .map(lambda x: {**x, "processed": True})
-    .shuffle(seed=123)
-    .take(50)
-)
+sample = dataset.take(100)
 ```
 
-### Batching
+#### Chaining Operations
+
+```python
+# Build a preprocessing pipeline
+train_data = (
+    dataset
+    .filter(lambda x: x["quality_score"] > 0.8)
+    .filter(lambda x: len(x["text"]) >= 50)
+    .map(lambda x: {
+        "text": x["text"].strip(),
+        "label": x["category"],
+        "source": x["metadata"]["source"]
+    })
+    .shuffle(seed=42)
+)
+
+print(f"Filtered to {len(train_data)} high-quality examples")
+```
+
+#### Batching for Training
 
 ```python
 # Iterate in batches
 for batch in dataset.batch(32):
-    # batch is a list of documents
-    print(f"Batch size: {len(batch)}")
-    
-# Or collect all batches
-batches = list(dataset.batch(32))
+    texts = [doc["text"] for doc in batch]
+    labels = [doc["label"] for doc in batch]
+    # Feed to your model...
+
+# With PyTorch DataLoader
+from torch.utils.data import DataLoader
+
+loader = DataLoader(
+    dataset,
+    batch_size=32,
+    shuffle=True,
+    collate_fn=my_collate_fn
+)
 ```
 
-### Features
+### ZIterableDataset (Streaming)
 
-```python
-# Infer features from first document
-print(dataset.features)
-# {'text': 'string', 'label': 'int', 'tags': 'list'}
-```
-
----
-
-## ZIterableDataset
-
-Memory-efficient streaming for large datasets.
+Best for large datasets that don't fit in memory:
 
 ```python
 from zippy import ZIterableDataset
 
-# Create iterable dataset
-iterable = ZIterableDataset.from_store("./large_data", "train")
+# Create streaming dataset
+stream = ZIterableDataset.from_store("./large_dataset", "train")
 
-# Streaming iteration (no random access)
-for doc in iterable:
+# Iterate (no random access)
+for doc in stream:
     process(doc)
 
 # Shuffle with buffer (memory-efficient)
-shuffled = iterable.shuffle(buffer_size=1000, seed=42)
+shuffled = stream.shuffle(buffer_size=10000, seed=42)
 
-# Lazy transformations
+# Lazy transformations (applied during iteration)
 processed = (
-    iterable
+    stream
     .filter(lambda x: x["valid"])
     .map(lambda x: transform(x))
-    .take(10000)
+    .take(100000)  # Stop after 100k
 )
 
-# Batched streaming
-for batch in iterable.batch(32):
+# Batched streaming for training
+for batch in stream.batch(32):
     train_step(batch)
 ```
 
 ---
 
-## Remote Loading
+## Recipes
 
-Load datasets from various sources.
+### Recipe: LLM Fine-tuning Dataset
 
 ```python
-from zippy import load_remote
+from zippy import ZDSStore, ZDataset
 
-# Local path
-dataset = load_remote("./my_dataset", collection="train")
+# Create training data store
+store = ZDSStore.open("./finetune_data", "conversations")
 
-# GitHub repository
-dataset = load_remote("zippydata/example-datasets")
+# Add conversation examples
+store.put("conv_001", {
+    "messages": [
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "What is machine learning?"},
+        {"role": "assistant", "content": "Machine learning is..."}
+    ],
+    "metadata": {"source": "manual", "quality": "high"}
+})
 
-# With specific collection and version
-dataset = load_remote(
-    "zippydata/example-datasets",
-    collection="train",
-    revision="v1.0"
+# Convert to training format
+dataset = ZDataset.from_store("./finetune_data", "conversations")
+
+def to_chat_format(doc):
+    """Convert to OpenAI chat format"""
+    return {
+        "messages": doc["messages"],
+        "source": doc["metadata"]["source"]
+    }
+
+train_data = (
+    dataset
+    .filter(lambda x: x["metadata"]["quality"] == "high")
+    .map(to_chat_format)
+    .shuffle(seed=42)
 )
 
-# Streaming mode for large datasets
-for doc in load_remote("zippydata/large", streaming=True):
-    process(doc)
+# Export for training
+for doc in train_data:
+    print(doc)
+```
 
-# Private repository
-dataset = load_remote(
-    "myorg/private-repo",
-    token=os.environ["GITHUB_TOKEN"]
-)
+### Recipe: Evaluation Pipeline
+
+```python
+from zippy import ZDSStore
+import json
+from datetime import datetime
+
+# Store evaluation results
+store = ZDSStore.open("./eval_results", "gpt4_baseline")
+
+def run_evaluation(model, test_cases):
+    for i, test in enumerate(test_cases):
+        # Run model
+        prediction = model.predict(test["input"])
+        
+        # Store result with full context
+        store.put(f"eval_{i:05d}", {
+            "input": test["input"],
+            "expected": test["expected"],
+            "prediction": prediction,
+            "correct": prediction == test["expected"],
+            "latency_ms": model.last_latency,
+            "timestamp": datetime.now().isoformat(),
+            "model_version": model.version
+        })
+
+# Later: analyze results
+results = list(store.scan())
+accuracy = sum(r["correct"] for r in results) / len(results)
+avg_latency = sum(r["latency_ms"] for r in results) / len(results)
+
+print(f"Accuracy: {accuracy:.2%}")
+print(f"Avg latency: {avg_latency:.1f}ms")
+
+# Debug failures
+failures = [r for r in results if not r["correct"]]
+for f in failures[:5]:
+    print(f"Input: {f['input']}")
+    print(f"Expected: {f['expected']}")
+    print(f"Got: {f['prediction']}")
+    print("---")
+```
+
+### Recipe: Synthetic Data Generation
+
+```python
+from zippy import ZDSStore
+import openai
+
+store = ZDSStore.open("./synthetic_data", "qa_pairs")
+
+def generate_qa_pairs(topic, count=10):
+    """Generate Q&A pairs using an LLM"""
+    prompt = f"""Generate {count} question-answer pairs about {topic}.
+    Format as JSON array with 'question' and 'answer' fields."""
+    
+    response = openai.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    
+    pairs = json.loads(response.choices[0].message.content)
+    
+    for i, pair in enumerate(pairs):
+        doc_id = f"{topic.replace(' ', '_')}_{i:03d}"
+        store.put(doc_id, {
+            "question": pair["question"],
+            "answer": pair["answer"],
+            "topic": topic,
+            "generated_by": "gpt-4",
+            "timestamp": datetime.now().isoformat()
+        })
+
+# Generate data for multiple topics
+topics = ["Python programming", "Machine learning", "Data structures"]
+for topic in topics:
+    generate_qa_pairs(topic, count=20)
+
+print(f"Generated {len(store)} Q&A pairs")
+
+# Inspect the data (it's just JSONL!)
+# cat ./synthetic_data/collections/qa_pairs/meta/data.jsonl | head -5 | jq .
 ```
 
 ---
 
-## HuggingFace Integration
+## Integrations
 
-### Convert HuggingFace to ZDS
+### HuggingFace Datasets
+
+Convert between ZDS and HuggingFace seamlessly:
 
 ```python
 from datasets import load_dataset
-from zippy import from_hf
+from zippy import from_hf, to_hf
 
-# Load HuggingFace dataset
-hf = load_dataset("imdb", split="train")
+# HuggingFace → ZDS
+hf_dataset = load_dataset("imdb", split="train")
+zds = from_hf(hf_dataset, "./imdb_zds", collection="train")
 
-# Convert to ZDS
-zds = from_hf(hf, "./imdb_zds", collection="train")
+# Now you can inspect with standard tools:
+# cat ./imdb_zds/collections/train/meta/data.jsonl | head -1 | jq .
 
-# DatasetDict (multiple splits)
-hf_dict = load_dataset("imdb")  # Has train and test
-zds = from_hf(hf_dict, "./imdb_zds")  # Creates train/ and test/ collections
+# ZDS → HuggingFace
+hf_back = to_hf("./imdb_zds", collection="train")
 
-# With custom ID column
-zds = from_hf(hf, "./output", id_column="article_id")
+# Works with DatasetDict too
+hf_dict = load_dataset("imdb")  # Has train and test splits
+from_hf(hf_dict, "./imdb_zds")  # Creates train/ and test/ collections
 ```
 
-### Convert ZDS to HuggingFace
-
-```python
-from zippy import to_hf, to_hf_dict
-
-# Single collection
-hf = to_hf("./my_data", collection="train")
-
-# Or from ZDataset
-hf = to_hf(dataset)
-
-# Multiple collections as DatasetDict
-hf_dict = to_hf_dict("./my_data", collections=["train", "test"])
-```
-
----
-
-## Pandas Integration
+### Pandas DataFrames
 
 ```python
 from zippy import read_zds, to_zds
 import pandas as pd
 
-# ZDS to DataFrame
-df = read_zds("./data", collection="train")
+# ZDS → DataFrame
+df = read_zds("./my_dataset", collection="train")
+print(df.head())
 
-# DataFrame to ZDS
-df = pd.DataFrame({"text": ["a", "b"], "label": [1, 0]})
+# DataFrame → ZDS
+df = pd.DataFrame({
+    "text": ["Hello", "World", "Test"],
+    "label": [1, 0, 1],
+    "score": [0.9, 0.3, 0.7]
+})
+
+# Use a column as document ID
 to_zds(df, "./output", collection="data", id_column="text")
+
+# Or auto-generate IDs
+to_zds(df, "./output", collection="data")  # Uses row index
 ```
 
----
+### DuckDB SQL Queries
 
-## DuckDB Integration
+Query your data with SQL:
 
 ```python
 from zippy import query_zds, register_zds
 import duckdb
 
-# Quick query
+# Quick one-off query
 results = query_zds(
-    "./data",
-    "SELECT label, COUNT(*) FROM train GROUP BY label"
+    "./my_dataset",
+    """
+    SELECT label, COUNT(*) as count, AVG(score) as avg_score
+    FROM train
+    GROUP BY label
+    ORDER BY count DESC
+    """
 )
+print(results)
 
-# Complex queries with connection
+# Complex queries with multiple collections
 conn = duckdb.connect()
-register_zds(conn, "./data", collection="train")
-register_zds(conn, "./data", collection="metadata")
+register_zds(conn, "./my_dataset", collection="train")
+register_zds(conn, "./my_dataset", collection="metadata")
 
+# Join across collections
 results = conn.execute("""
-    SELECT t.*, m.category
+    SELECT 
+        t.text,
+        t.label,
+        m.category,
+        m.source
     FROM train t
-    JOIN metadata m ON t.id = m.id
+    JOIN metadata m ON t._id = m.doc_id
     WHERE t.score > 0.8
+    ORDER BY t.score DESC
+    LIMIT 100
 """).fetchdf()
 ```
 
 ---
 
-## Examples
+## API Reference
 
-See the [examples directory](https://github.com/zippydata/zippy/tree/main/examples/python) for complete working examples:
+### ZDSStore
 
-- `01_basic_usage.py` - Core operations
-- `02_ml_dataset.py` - ML workflows
-- `03_pandas_integration.py` - DataFrame conversion
-- `04_duckdb_integration.py` - SQL queries
-- `05_huggingface_integration.py` - HF conversion
-- `06_remote_datasets.py` - Remote loading
+```python
+class ZDSStore:
+    @classmethod
+    def open(cls, path: str, collection: str, strict: bool = False) -> ZDSStore:
+        """Open or create a store."""
+    
+    def put(self, doc_id: str, document: dict) -> None:
+        """Insert or update a document."""
+    
+    def get(self, doc_id: str) -> Optional[dict]:
+        """Get document by ID. Returns None if not found."""
+    
+    def delete(self, doc_id: str) -> None:
+        """Delete a document."""
+    
+    def scan(self, fields: List[str] = None) -> Iterator[dict]:
+        """Iterate all documents, optionally projecting fields."""
+    
+    def list_doc_ids(self) -> List[str]:
+        """Get all document IDs."""
+    
+    def __len__(self) -> int:
+        """Number of documents."""
+    
+    def __contains__(self, doc_id: str) -> bool:
+        """Check if document exists."""
+    
+    def __getitem__(self, doc_id: str) -> dict:
+        """Dict-style access. Raises KeyError if not found."""
+    
+    def __setitem__(self, doc_id: str, document: dict) -> None:
+        """Dict-style assignment."""
+    
+    def close(self) -> None:
+        """Close the store."""
+```
+
+### ZDataset
+
+```python
+class ZDataset:
+    @classmethod
+    def from_store(cls, path: str, collection: str) -> ZDataset:
+        """Create dataset from store path."""
+    
+    def __len__(self) -> int:
+        """Number of documents."""
+    
+    def __getitem__(self, idx: Union[int, slice]) -> Union[dict, ZDataset]:
+        """Index or slice access."""
+    
+    def shuffle(self, seed: int = None) -> ZDataset:
+        """Return shuffled dataset."""
+    
+    def filter(self, fn: Callable[[dict], bool]) -> ZDataset:
+        """Filter documents."""
+    
+    def map(self, fn: Callable[[dict], dict]) -> ZDataset:
+        """Transform documents."""
+    
+    def select(self, indices: List[int]) -> ZDataset:
+        """Select specific indices."""
+    
+    def take(self, n: int) -> ZDataset:
+        """Take first n documents."""
+    
+    def batch(self, size: int) -> Iterator[List[dict]]:
+        """Iterate in batches."""
+    
+    @property
+    def features(self) -> dict:
+        """Inferred schema from first document."""
+```
+
+---
+
+## Next Steps
+
+- **[Getting Started](./getting-started)** — 5-minute quickstart
+- **[CLI Reference](./cli)** — Command-line tools
+- **[Format Specification](./format)** — On-disk structure
+- **[Examples](https://github.com/zippydata/zippy/tree/master/examples/python)** — Working code samples

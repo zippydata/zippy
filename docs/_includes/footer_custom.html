@@ -1,0 +1,114 @@
+<!-- Persistent Table of Contents -->
+<nav class="toc-wrapper" id="toc-nav">
+  <div class="toc-title">On this page</div>
+  <ul class="toc-list" id="toc-list"></ul>
+</nav>
+
+<script>
+(function() {
+  document.addEventListener('DOMContentLoaded', function() {
+    var tocList = document.getElementById('toc-list');
+    var tocNav = document.getElementById('toc-nav');
+    
+    if (!tocList || !tocNav) return;
+    
+    // Get all h2 and h3 headings in main content
+    var content = document.querySelector('.main-content') || document.querySelector('main') || document.body;
+    var headings = content.querySelectorAll('h2[id], h3[id]');
+    
+    // Hide TOC if not enough headings
+    if (headings.length < 3) {
+      tocNav.style.display = 'none';
+      return;
+    }
+    
+    // Build TOC
+    var currentH2Li = null;
+    var currentUl = null;
+    
+    headings.forEach(function(heading) {
+      var li = document.createElement('li');
+      var a = document.createElement('a');
+      a.href = '#' + heading.id;
+      
+      // Clean up heading text
+      var text = heading.textContent || heading.innerText;
+      text = text.replace(/^#\s*/, '').replace(/¶$/, '').trim();
+      a.textContent = text;
+      a.setAttribute('data-heading-id', heading.id);
+      
+      if (heading.tagName === 'H2') {
+        li.appendChild(a);
+        tocList.appendChild(li);
+        currentH2Li = li;
+        currentUl = null;
+      } else if (heading.tagName === 'H3') {
+        if (!currentH2Li) {
+          // H3 without parent H2, add directly
+          li.appendChild(a);
+          tocList.appendChild(li);
+        } else {
+          if (!currentUl) {
+            currentUl = document.createElement('ul');
+            currentH2Li.appendChild(currentUl);
+          }
+          li.appendChild(a);
+          currentUl.appendChild(li);
+        }
+      }
+    });
+    
+    // Highlight active section on scroll
+    var tocLinks = tocList.querySelectorAll('a');
+    var headingsArray = Array.prototype.slice.call(headings);
+    
+    function updateActiveLink() {
+      var scrollPos = window.scrollY + 120;
+      var current = '';
+      
+      headingsArray.forEach(function(heading) {
+        if (heading.offsetTop <= scrollPos) {
+          current = heading.id;
+        }
+      });
+      
+      tocLinks.forEach(function(link) {
+        link.classList.remove('active');
+        if (link.getAttribute('data-heading-id') === current) {
+          link.classList.add('active');
+        }
+      });
+    }
+    
+    // Throttle scroll handler
+    var ticking = false;
+    window.addEventListener('scroll', function() {
+      if (!ticking) {
+        window.requestAnimationFrame(function() {
+          updateActiveLink();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    });
+    
+    updateActiveLink();
+    
+    // Smooth scroll on click
+    tocLinks.forEach(function(link) {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        var targetId = this.getAttribute('href').slice(1);
+        var target = document.getElementById(targetId);
+        if (target) {
+          window.scrollTo({
+            top: target.offsetTop - 80,
+            behavior: 'smooth'
+          });
+          history.pushState(null, null, '#' + targetId);
+        }
+      });
+    });
+  });
+})();
+</script>

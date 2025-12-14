@@ -1,8 +1,7 @@
 ---
 layout: default
 title: Format Specification
-parent: Documentation
-nav_order: 6
+nav_order: 7
 ---
 
 # Format Specification

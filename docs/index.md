@@ -6,7 +6,9 @@ description: "ZDS - A human-readable, schema-flexible document store for modern 
 permalink: /
 ---
 
-> 🧭 **Working on the codebase with AI?** Start with [AGENTS.md](../AGENTS.md) for global setup and package-specific guides.
+<div class="callout info" style="margin-bottom: 2rem;">
+<strong>Working on the codebase with AI?</strong> Start with <a href="https://github.com/zippydata/zippy/blob/master/AGENTS.md">AGENTS.md</a> for global setup and package-specific guides.
+</div>
 
 <div class="hero">
   <img src="{{ '/assets/images/zippy-logo.png' | relative_url }}" alt="Zippy Data System" class="logo">
@@ -24,18 +26,18 @@ permalink: /
 <div class="stats-banner">
   <div class="stat">
     <div class="value">20x</div>
-    <div class="label">Faster writes than SQLite</div>
+    <div class="label">Faster Writes</div>
   </div>
   <div class="stat">
     <div class="value">3.5x</div>
-    <div class="label">Faster random access</div>
+    <div class="label">Faster Access</div>
   </div>
   <div class="stat">
     <div class="value">100%</div>
-    <div class="label">Human-readable</div>
+    <div class="label">Human-Readable</div>
   </div>
   <div class="stat">
-    <div class="value">0</div>
+    <div class="value">Zero</div>
     <div class="label">Lock-in</div>
   </div>
 </div>
@@ -86,7 +88,7 @@ Modern ML and data workflows need **flexibility** that traditional formats strug
 
 ## Quick Start
 
-<div class="quick-start">
+<!-- <div class="quick-start"> -->
 
 ### Python
 
@@ -145,7 +147,7 @@ zippy put ./my_dataset -c train doc_001 --data '{"text": "Hello"}'
 zippy scan ./my_dataset -c train --fields text,label
 ```
 
-</div>
+<!-- </div> -->
 
 ---
 
@@ -233,7 +235,7 @@ my_dataset/
 
 **This isn't meant to be novel and it's intentionally unoriginal.** Novelty in file formats creates lock-in. We chose boring technologies that will outlast any single library.
 
-[Read the full paper →](https://github.com/zippydata/zippy/blob/main/PAPER.md)
+[Read the full paper →](https://github.com/zippydata/zippy/blob/master/PAPER.md)
 
 ---
 
@@ -303,18 +305,19 @@ Benchmarked on Apple M3 Max with 100,000 records:
   <div class="feature-card">
     <h3>📊 Examples</h3>
     <p>Real-world examples for ML training, data pipelines, and more.</p>
-    <a href="https://github.com/zippydata/zippy/tree/main/examples" class="btn btn-outline">View Examples</a>
+    <a href="https://github.com/zippydata/zippy/tree/master/examples" class="btn btn-outline">View Examples</a>
   </div>
 </div>
 
 ---
 
-<div style="text-align: center; margin-top: 3rem;">
-  <p style="color: #666;">
-    Zippy (ZDS) is open source under the MIT License.<br>
-    Copyright © 2025 Omar Kamali<br>
-    <a href="https://github.com/zippydata/zippy">GitHub</a> · 
-    <a href="https://github.com/zippydata/zippy/blob/main/PAPER.md">Paper</a> · 
-    <a href="https://github.com/zippydata/zippy/blob/main/CHANGELOG.md">Changelog</a>
+<footer style="text-align: center; margin-top: 3rem; padding: 2rem 0; border-top: 1px solid #e2e8f0;">
+  <p style="color: #64748b; font-size: 0.9rem; margin: 0;">
+    Zippy Data System is open source under the MIT License<br>
+    <span style="margin-top: 0.5rem; display: inline-block;">
+      <a href="https://github.com/zippydata/zippy">GitHub</a> · 
+      <a href="https://github.com/zippydata/zippy/blob/master/PAPER.md">Paper</a> · 
+      <a href="https://github.com/zippydata/zippy/blob/master/CHANGELOG.md">Changelog</a>
+    </span>
   </p>
-</div>
+</footer>

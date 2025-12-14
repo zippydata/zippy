@@ -1,22 +1,51 @@
 ---
 layout: default
 title: Getting Started
-parent: Documentation
-nav_order: 1
+nav_order: 2
 ---
 
 # Getting Started
+{: .no_toc }
 
-Get up and running with ZDS in under 5 minutes.
+Get up and running with ZDS in under 5 minutes. This guide walks you through installation, creating your first dataset, and understanding what makes ZDS different.
+
+<details open markdown="block">
+  <summary>Table of contents</summary>
+  {: .text-delta }
+1. TOC
+{:toc}
+</details>
+
+---
+
+## What is ZDS?
+
+ZDS (Zippy Data System) is a document store designed for ML and data engineering workflows. It stores JSON documents in a human-readable format while providing database-like performance.
+
+**Key benefits:**
+- **Human-readable**: Your data is stored as JSONL files you can inspect with `cat`, edit with `vim`, and version with `git`
+- **Schema-flexible**: Each document can have different fields—no migrations needed
+- **Fast**: O(1) random access, 4.6M writes/second, binary indexes
+- **Zero lock-in**: Standard ZIP + JSONL format works without any special tools
+
+---
 
 ## Installation
 
 Choose your preferred language:
 
+<div class="code-tabs">
+
 ### Python
 
 ```bash
 pip install zippy-data
+```
+
+For all integrations (Pandas, DuckDB, HuggingFace):
+
+```bash
+pip install zippy-data[all]
 ```
 
 ### Node.js
@@ -32,6 +61,19 @@ npm install @zippydata/core
 [dependencies]
 zippy_core = "0.1"
 ```
+
+### CLI
+
+```bash
+# macOS
+brew install zippydata/tap/zippy
+
+# Or download from releases
+curl -L https://github.com/zippydata/zippy/releases/latest/download/zippy-$(uname -m)-apple-darwin.tar.gz | tar xz
+sudo mv zippy /usr/local/bin/
+```
+
+</div>
 
 ---
 
@@ -278,4 +320,4 @@ unzip my_dataset.zds -d extracted/
 - **[Node.js Guide](./nodejs)** - JavaScript usage
 - **[CLI Reference](./cli)** - All commands
 - **[Format Specification](./format)** - Technical details
-- **[Examples](https://github.com/zippydata/zippy/tree/main/examples)** - More code samples
+- **[Examples](https://github.com/zippydata/zippy/tree/master/examples)** - More code samples

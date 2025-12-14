@@ -1,13 +1,22 @@
 ---
 layout: default
 title: Node.js Guide
-parent: Documentation
-nav_order: 3
+nav_order: 4
 ---
 
 # Node.js Guide
+{: .no_toc }
 
-Complete guide to using ZDS with Node.js and TypeScript.
+The Node.js SDK provides native bindings to the Rust core, giving you high performance with a familiar JavaScript API. Perfect for backend services, ETL pipelines, and serverless functions.
+
+<details open markdown="block">
+  <summary>Table of contents</summary>
+  {: .text-delta }
+1. TOC
+{:toc}
+</details>
+
+---
 
 ## Installation
 
@@ -15,168 +24,239 @@ Complete guide to using ZDS with Node.js and TypeScript.
 npm install @zippydata/core
 ```
 
-## Quick Reference
+Or with yarn/pnpm:
 
-```typescript
-import { ZdsStore, BulkWriter, version } from '@zippydata/core';
+```bash
+yarn add @zippydata/core
+pnpm add @zippydata/core
+```
 
-// Check version
-console.log(version());  // "0.1.0"
+The package includes pre-built binaries for:
+- **macOS**: x64 and ARM64 (Apple Silicon)
+- **Linux**: x64 and ARM64
+- **Windows**: x64
+
+---
+
+## Quick Start
+
+```javascript
+const { ZdsStore } = require('@zippydata/core');
+
+// Create or open a store
+const store = ZdsStore.open('./my_dataset', 'train');
+
+// Add documents
+store.put('user_001', { name: 'Alice', role: 'admin' });
+store.put('user_002', { name: 'Bob', role: 'user' });
+
+// Retrieve by ID
+console.log(store.get('user_001'));
+// { name: 'Alice', role: 'admin' }
+
+// Iterate all documents
+for (const doc of store.scan()) {
+    console.log(doc._id, doc.name);
+}
+
+// Always close when done
+store.close();
 ```
 
 ---
 
-## ZdsStore
-
-The primary interface for document operations.
+## Working with Stores
 
 ### Opening a Store
 
 ```javascript
 const { ZdsStore } = require('@zippydata/core');
 
-// Open or create
-const store = ZdsStore.open(
-    './my_data',    // Root path
-    'train',        // Collection name (optional, default: "default")
-    100             // Batch size for auto-flush (optional)
-);
+// Basic usage
+const store = ZdsStore.open('./my_data', 'train');
 
-// Always close when done
-store.close();
+// With custom batch size (controls auto-flush frequency)
+const store = ZdsStore.open('./my_data', 'train', 500);
+
+// Store info
+console.log(store.info);
+// { root: './my_data', collection: 'train', count: 1000 }
 ```
 
-### CRUD Operations
+### Adding Documents
+
+Every document needs a unique string ID:
 
 ```javascript
-// Put (create or update)
-store.put('doc_001', { text: 'Hello', label: 1 });
-store.put('doc_002', { text: 'World', tags: ['a', 'b'] });
+// Simple document
+store.put('product_001', {
+    name: 'Widget Pro',
+    price: 29.99,
+    inStock: true
+});
 
+// Complex nested structure
+store.put('order_001', {
+    customer: {
+        id: 'cust_123',
+        email: 'alice@example.com'
+    },
+    items: [
+        { sku: 'WIDGET-001', qty: 2, price: 29.99 },
+        { sku: 'GADGET-002', qty: 1, price: 49.99 }
+    ],
+    total: 109.97,
+    createdAt: new Date().toISOString()
+});
+
+// Schema-flexible: different documents can have different fields
+store.put('order_002', {
+    customer: { id: 'cust_456' },
+    items: [{ sku: 'THING-003', qty: 5 }],
+    total: 24.95,
+    discount: { code: 'SAVE10', amount: 2.50 }  // New field!
+});
+```
+
+### Retrieving Documents
+
+```javascript
 // Get by ID
-const doc = store.get('doc_001');
-console.log(doc);  // { text: 'Hello', label: 1 }
+const doc = store.get('order_001');
+console.log(doc.total);  // 109.97
 
-// Check existence
-if (store.exists('doc_001')) {
-    console.log('Found!');
+// Check if document exists
+if (store.exists('order_001')) {
+    console.log('Order found!');
 }
+
+// Get returns null for missing documents
+const missing = store.get('nonexistent');
+console.log(missing);  // null
+
+// List all document IDs
+const allIds = store.listDocIds();
+console.log(allIds);  // ['order_001', 'order_002', ...]
+```
+
+### Updating and Deleting
+
+```javascript
+// Update (put with same ID replaces the document)
+store.put('product_001', {
+    name: 'Widget Pro',
+    price: 24.99,      // Updated price
+    inStock: true,
+    onSale: true       // New field
+});
 
 // Delete
-store.delete('doc_002');
+store.delete('product_001');
 
-// Count
-console.log(store.count);  // Number of documents
-
-// List all IDs
-const ids = store.listDocIds();
-console.log(ids);  // ['doc_001', ...]
+// Count documents
+console.log(`Total documents: ${store.count}`);
 ```
 
-### Scanning
+### Scanning Documents
 
 ```javascript
-// Scan all documents
-const docs = store.scan();
-for (const doc of docs) {
-    console.log(doc);
+// Get all documents as array
+const allDocs = store.scan();
+console.log(`Found ${allDocs.length} documents`);
+
+// Iterate with for...of
+for (const doc of store.scan()) {
+    console.log(doc._id, doc.name);
 }
 
-// Scan returns an array
-console.log(`Total: ${docs.length}`);
+// Filter in JavaScript
+const admins = store.scan().filter(doc => doc.role === 'admin');
+const highValue = store.scan().filter(doc => doc.total > 100);
 ```
 
-### Flushing
+### Flushing and Closing
 
 ```javascript
 // Explicit flush (writes pending changes to disk)
 store.flush();
 
-// Close also flushes
+// Close flushes automatically and releases resources
 store.close();
-```
 
-### Store Info
-
-```javascript
-const info = store.info;
-console.log(info);
-// {
-//   root: '/path/to/data',
-//   collection: 'train',
-//   count: 1000
-// }
+// Pattern: try/finally for cleanup
+const store = ZdsStore.open('./data', 'train');
+try {
+    // ... do work ...
+} finally {
+    store.close();
+}
 ```
 
 ---
 
-## BulkWriter
+## Bulk Operations
 
-High-throughput writer for bulk ingestion.
+### BulkWriter for High Throughput
+
+When ingesting large amounts of data, use `BulkWriter` for optimal performance:
 
 ```javascript
 const { BulkWriter } = require('@zippydata/core');
 
-// Create writer
-const writer = BulkWriter.create(
-    './data',       // Root path
-    'large',        // Collection
-    500             // Batch size (auto-flush threshold)
-);
+// Create a bulk writer with batch size of 500
+const writer = BulkWriter.create('./data', 'events', 500);
 
-// Write many documents
+// Write 100,000 documents efficiently
 for (let i = 0; i < 100000; i++) {
-    writer.put(`doc_${i}`, {
-        id: i,
-        value: Math.random(),
-        category: ['A', 'B', 'C'][i % 3]
+    writer.put(`event_${i.toString().padStart(6, '0')}`, {
+        timestamp: Date.now(),
+        type: ['click', 'view', 'purchase'][i % 3],
+        userId: `user_${i % 1000}`,
+        value: Math.random() * 100
     });
 }
 
-// Final flush
+// Final flush to write remaining documents
 writer.flush();
 
 console.log(`Wrote ${writer.count} documents`);
 ```
 
----
+### Raw JSONL for Maximum Speed
 
-## Raw JSONL Operations
-
-For maximum performance, use raw JSONL methods.
-
-### Write JSONL Blob
+For the absolute fastest ingestion, use raw JSONL operations:
 
 ```javascript
 // Pre-serialize your data
-const lines = [
-    JSON.stringify({ _id: 'doc_1', text: 'hello' }),
-    JSON.stringify({ _id: 'doc_2', text: 'world' })
-].join('\n');
+const documents = [
+    { _id: 'doc_001', text: 'Hello', score: 0.95 },
+    { _id: 'doc_002', text: 'World', score: 0.87 },
+    { _id: 'doc_003', text: 'Test', score: 0.72 }
+];
 
-const buffer = Buffer.from(lines);
-const docIds = ['doc_1', 'doc_2'];
+const jsonlData = documents
+    .map(doc => JSON.stringify(doc))
+    .join('\n');
 
-const count = store.writeJsonl(buffer, docIds);
+const docIds = documents.map(doc => doc._id);
+
+// Write in one operation
+const count = store.writeJsonl(Buffer.from(jsonlData), docIds);
 console.log(`Wrote ${count} documents`);
 ```
 
-### Read JSONL Blob
+### Reading Raw JSONL
 
 ```javascript
-// Read entire file as buffer (fastest)
+// Read entire collection as buffer (fastest for export)
 const blob = store.readJsonlBlob();
 console.log(`Read ${blob.length} bytes`);
 
 // Parse manually
 const lines = blob.toString().trim().split('\n');
 const docs = lines.map(line => JSON.parse(line));
-```
 
-### Scan Raw
-
-```javascript
-// Get array of Buffer (one per document)
+// Or use scanRaw for per-document buffers
 const rawDocs = store.scanRaw();
 for (const buf of rawDocs) {
     const doc = JSON.parse(buf.toString());
@@ -188,88 +268,219 @@ for (const buf of rawDocs) {
 
 ## TypeScript
 
-Full TypeScript definitions are included.
+Full TypeScript definitions are included:
 
 ```typescript
 import { ZdsStore, BulkWriter, StoreInfo, version } from '@zippydata/core';
 
-interface MyDocument {
-    text: string;
-    label: number;
-    tags?: string[];
+// Define your document types
+interface User {
+    name: string;
+    email: string;
+    role: 'admin' | 'user' | 'guest';
+    createdAt: string;
 }
 
-const store = ZdsStore.open('./data', 'train');
+interface Order {
+    userId: string;
+    items: Array<{ sku: string; qty: number; price: number }>;
+    total: number;
+    status: 'pending' | 'shipped' | 'delivered';
+}
 
-// Put with type
-store.put('doc_001', {
-    text: 'Hello',
-    label: 1,
-    tags: ['greeting']
-} as MyDocument);
+// Open store
+const store = ZdsStore.open('./data', 'users');
 
-// Get returns any (parse as needed)
-const doc = store.get('doc_001') as MyDocument;
-console.log(doc.text);
+// Put with type safety
+const user: User = {
+    name: 'Alice',
+    email: 'alice@example.com',
+    role: 'admin',
+    createdAt: new Date().toISOString()
+};
+store.put('user_001', user);
+
+// Get and cast
+const retrieved = store.get('user_001') as User | null;
+if (retrieved) {
+    console.log(retrieved.name);  // TypeScript knows this is a string
+}
 
 // Store info is typed
 const info: StoreInfo = store.info;
-console.log(info.count);
+console.log(`Collection: ${info.collection}, Count: ${info.count}`);
 
 store.close();
 ```
 
 ---
 
-## Error Handling
+## Recipes
+
+### Recipe: Express API with ZDS Backend
+
+```javascript
+const express = require('express');
+const { ZdsStore } = require('@zippydata/core');
+
+const app = express();
+app.use(express.json());
+
+// Open store once at startup
+const store = ZdsStore.open('./data', 'products');
+
+// GET all products
+app.get('/products', (req, res) => {
+    const products = store.scan();
+    res.json(products);
+});
+
+// GET single product
+app.get('/products/:id', (req, res) => {
+    const product = store.get(req.params.id);
+    if (!product) {
+        return res.status(404).json({ error: 'Not found' });
+    }
+    res.json(product);
+});
+
+// POST new product
+app.post('/products', (req, res) => {
+    const id = `prod_${Date.now()}`;
+    store.put(id, { ...req.body, createdAt: new Date().toISOString() });
+    store.flush();  // Ensure durability
+    res.status(201).json({ id, ...req.body });
+});
+
+// DELETE product
+app.delete('/products/:id', (req, res) => {
+    if (!store.exists(req.params.id)) {
+        return res.status(404).json({ error: 'Not found' });
+    }
+    store.delete(req.params.id);
+    store.flush();
+    res.status(204).send();
+});
+
+// Cleanup on shutdown
+process.on('SIGTERM', () => {
+    store.close();
+    process.exit(0);
+});
+
+app.listen(3000, () => console.log('Server running on :3000'));
+```
+
+### Recipe: ETL Pipeline
+
+```javascript
+const { ZdsStore, BulkWriter } = require('@zippydata/core');
+const fs = require('fs');
+const readline = require('readline');
+
+async function importFromNDJSON(inputFile, outputPath, collection) {
+    const writer = BulkWriter.create(outputPath, collection, 1000);
+    
+    const fileStream = fs.createReadStream(inputFile);
+    const rl = readline.createInterface({
+        input: fileStream,
+        crlfDelay: Infinity
+    });
+    
+    let count = 0;
+    for await (const line of rl) {
+        if (!line.trim()) continue;
+        
+        const doc = JSON.parse(line);
+        const id = doc.id || doc._id || `doc_${count}`;
+        
+        writer.put(id, doc);
+        count++;
+        
+        if (count % 10000 === 0) {
+            console.log(`Processed ${count} documents...`);
+        }
+    }
+    
+    writer.flush();
+    console.log(`Imported ${count} documents to ${outputPath}/${collection}`);
+}
+
+// Usage
+importFromNDJSON('./data.ndjson', './output', 'imported');
+```
+
+### Recipe: Serverless Function (AWS Lambda)
 
 ```javascript
 const { ZdsStore } = require('@zippydata/core');
 
-try {
-    const store = ZdsStore.open('./data', 'train');
-    
-    // Document not found
-    try {
-        const doc = store.get('nonexistent');
-    } catch (e) {
-        console.log('Document not found');
+// Store in /tmp for Lambda (or use EFS for persistence)
+let store = null;
+
+function getStore() {
+    if (!store) {
+        store = ZdsStore.open('/tmp/cache', 'data');
     }
-    
-    store.close();
-} catch (e) {
-    console.error('Store error:', e.message);
+    return store;
 }
+
+exports.handler = async (event) => {
+    const s = getStore();
+    
+    switch (event.action) {
+        case 'get':
+            const doc = s.get(event.id);
+            return { statusCode: doc ? 200 : 404, body: doc };
+            
+        case 'put':
+            s.put(event.id, event.data);
+            s.flush();
+            return { statusCode: 201, body: { id: event.id } };
+            
+        case 'list':
+            return { statusCode: 200, body: s.scan() };
+            
+        default:
+            return { statusCode: 400, body: { error: 'Unknown action' } };
+    }
+};
 ```
 
 ---
 
 ## Performance Tips
 
-### Batch Size
+### 1. Use Appropriate Batch Sizes
 
 ```javascript
-// Higher batch size = fewer disk writes = faster
-const store = ZdsStore.open('./data', 'train', 1000);
+// For many small writes, use larger batch size
+const store = ZdsStore.open('./data', 'logs', 1000);
+
+// For fewer large writes, smaller is fine
+const store = ZdsStore.open('./data', 'reports', 50);
 ```
 
-### Use BulkWriter for Large Ingestion
+### 2. Bulk Operations for Large Datasets
 
 ```javascript
-// BulkWriter is optimized for sequential writes
-const writer = BulkWriter.create('./data', 'large', 500);
+// ❌ Slow: Individual puts
+for (const record of bigDataset) {
+    store.put(record.id, record);
+}
 
-// Much faster than individual puts
+// ✅ Fast: BulkWriter
+const writer = BulkWriter.create('./data', 'large', 500);
 for (const record of bigDataset) {
     writer.put(record.id, record);
 }
 writer.flush();
 ```
 
-### Raw JSONL for Maximum Speed
+### 3. Raw JSONL for Maximum Throughput
 
 ```javascript
-// Pre-serialize for bulk operations
+// ✅ Fastest: Pre-serialize and write in bulk
 const jsonlData = records
     .map(r => JSON.stringify({ _id: r.id, ...r }))
     .join('\n');
@@ -277,44 +488,79 @@ const jsonlData = records
 store.writeJsonl(Buffer.from(jsonlData), records.map(r => r.id));
 ```
 
----
-
-## Examples
-
-See the [examples directory](https://github.com/zippydata/zippy/tree/main/examples/nodejs):
-
-- `01_basic_usage.js` - Core operations
-- `02_streaming_data.js` - Bulk and streaming
-
-### Basic Example
+### 4. Reuse Store Instances
 
 ```javascript
-const { ZdsStore, version } = require('@zippydata/core');
-const fs = require('fs');
+// ❌ Slow: Open/close for each operation
+function getData(id) {
+    const store = ZdsStore.open('./data', 'cache');
+    const doc = store.get(id);
+    store.close();
+    return doc;
+}
 
-console.log(`ZDS Version: ${version()}`);
+// ✅ Fast: Reuse store instance
+const store = ZdsStore.open('./data', 'cache');
 
-// Create store
-const store = ZdsStore.open('./example_data', 'demo');
-
-// Add documents
-const users = [
-    { name: 'Alice', role: 'admin' },
-    { name: 'Bob', role: 'user' },
-    { name: 'Charlie', role: 'user' }
-];
-
-users.forEach((user, i) => {
-    store.put(`user_${i}`, user);
-});
-
-console.log(`Created ${store.count} users`);
-
-// Query
-const docs = store.scan();
-const admins = docs.filter(d => d.role === 'admin');
-console.log(`Admins: ${admins.length}`);
-
-// Cleanup
-store.close();
+function getData(id) {
+    return store.get(id);
+}
 ```
+
+---
+
+## API Reference
+
+### ZdsStore
+
+```typescript
+class ZdsStore {
+    static open(path: string, collection?: string, batchSize?: number): ZdsStore;
+    
+    put(id: string, document: object): void;
+    get(id: string): object | null;
+    delete(id: string): void;
+    exists(id: string): boolean;
+    
+    scan(): object[];
+    scanRaw(): Buffer[];
+    listDocIds(): string[];
+    
+    writeJsonl(data: Buffer, ids: string[]): number;
+    readJsonlBlob(): Buffer;
+    
+    flush(): void;
+    close(): void;
+    
+    readonly count: number;
+    readonly info: StoreInfo;
+}
+
+interface StoreInfo {
+    root: string;
+    collection: string;
+    count: number;
+}
+```
+
+### BulkWriter
+
+```typescript
+class BulkWriter {
+    static create(path: string, collection: string, batchSize?: number): BulkWriter;
+    
+    put(id: string, document: object): void;
+    flush(): void;
+    
+    readonly count: number;
+}
+```
+
+---
+
+## Next Steps
+
+- **[Getting Started](./getting-started)** — 5-minute quickstart
+- **[Python Guide](./python)** — Python SDK reference
+- **[CLI Reference](./cli)** — Command-line tools
+- **[Examples](https://github.com/zippydata/zippy/tree/master/examples/nodejs)** — Working code samples

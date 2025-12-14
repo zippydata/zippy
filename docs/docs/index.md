@@ -7,50 +7,68 @@ permalink: /docs/
 ---
 
 # Documentation
+{: .no_toc }
 
-Welcome to the ZDS documentation. Here you'll find everything you need to use ZDS effectively.
+Everything you need to build with ZDS—from quick starts to deep dives.
 
-## Quick Links
+---
 
-- **[Getting Started](./getting-started)** - Install ZDS and create your first dataset
-- **[Python Guide](./python)** - Full Python API with examples
-- **[Node.js Guide](./nodejs)** - JavaScript/TypeScript usage
-- **[Rust Guide](./rust)** - Using the core library directly
-- **[CLI Reference](./cli)** - Command-line tool documentation
-- **[Format Specification](./format)** - Technical format details
-- **[Benchmarks](./benchmarks)** - Performance comparisons
+## Choose Your Path
 
-## Installation
+<div class="features">
+  <div class="feature-card">
+    <div class="icon">🚀</div>
+    <h3>Getting Started</h3>
+    <p>Install ZDS and create your first dataset in under 5 minutes.</p>
+    <a href="./getting-started" class="btn btn-primary">Start Here</a>
+  </div>
+  
+  <div class="feature-card">
+    <div class="icon">🐍</div>
+    <h3>Python Guide</h3>
+    <p>Full API reference with HuggingFace, Pandas, and DuckDB integrations.</p>
+    <a href="./python" class="btn btn-outline">Read Guide</a>
+  </div>
+  
+  <div class="feature-card">
+    <div class="icon">📦</div>
+    <h3>Node.js Guide</h3>
+    <p>Native bindings for backend services, ETL pipelines, and serverless.</p>
+    <a href="./nodejs" class="btn btn-outline">Read Guide</a>
+  </div>
+  
+  <div class="feature-card">
+    <div class="icon">⚙️</div>
+    <h3>CLI Reference</h3>
+    <p>Command-line tools for shell scripts and data pipelines.</p>
+    <a href="./cli" class="btn btn-outline">View Commands</a>
+  </div>
+  
+  <div class="feature-card">
+    <div class="icon">🦀</div>
+    <h3>Rust Guide</h3>
+    <p>Embed the core library directly in your Rust applications.</p>
+    <a href="./rust" class="btn btn-outline">Read Guide</a>
+  </div>
+  
+  <div class="feature-card">
+    <div class="icon">📐</div>
+    <h3>Format Spec</h3>
+    <p>Technical details of the on-disk format and index structure.</p>
+    <a href="./format" class="btn btn-outline">View Spec</a>
+  </div>
+</div>
 
-### Python
+---
 
-```bash
-pip install zippy-data
-```
+## Quick Installation
 
-### Node.js
-
-```bash
-npm install @zippydata/core
-```
-
-### Rust
-
-```toml
-# Cargo.toml
-[dependencies]
-zippy_core = "0.1"
-```
-
-### CLI
-
-```bash
-# From source
-cargo install --path cli
-
-# Or download from releases
-# https://github.com/zippydata/zippy/releases
-```
+| Language | Command |
+|----------|---------|
+| **Python** | `pip install zippy-data` |
+| **Node.js** | `npm install @zippydata/core` |
+| **Rust** | `cargo add zippy_core` |
+| **CLI** | [Download from releases](https://github.com/zippydata/zippy/releases) |
 
 ## Core Concepts
 
@@ -136,8 +154,15 @@ results = query_zds(
 print(results)
 ```
 
+---
+
 ## Need Help?
 
-- [GitHub Issues](https://github.com/zippydata/zippy/issues) - Bug reports and feature requests
-- [Examples](https://github.com/zippydata/zippy/tree/main/examples) - Working code samples
-- [Paper](https://github.com/zippydata/zippy/blob/main/PAPER.md) - Design rationale and benchmarks
+<div class="callout info">
+<strong>Resources:</strong>
+<ul style="margin: 0.5rem 0 0 0;">
+<li><a href="https://github.com/zippydata/zippy/issues">GitHub Issues</a> — Bug reports and feature requests</li>
+<li><a href="https://github.com/zippydata/zippy/tree/master/examples">Examples</a> — Working code samples for all languages</li>
+<li><a href="https://github.com/zippydata/zippy/blob/master/PAPER.md">Paper</a> — Design rationale and benchmarks</li>
+</ul>
+</div>

@@ -1,0 +1,94 @@
+{% if page.toc != false %}
+<nav class="toc-wrapper" id="toc-nav">
+  <div class="toc-title">On this page</div>
+  <ul class="toc-list" id="toc-list">
+    <!-- Populated by JavaScript -->
+  </ul>
+</nav>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const tocList = document.getElementById('toc-list');
+  const tocNav = document.getElementById('toc-nav');
+  
+  if (!tocList || !tocNav) return;
+  
+  // Get all h2 and h3 headings in main content
+  const content = document.querySelector('.main-content') || document.querySelector('main');
+  if (!content) return;
+  
+  const headings = content.querySelectorAll('h2[id], h3[id]');
+  
+  if (headings.length < 2) {
+    tocNav.style.display = 'none';
+    return;
+  }
+  
+  // Build TOC
+  let currentH2 = null;
+  let currentUl = null;
+  
+  headings.forEach(function(heading) {
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.href = '#' + heading.id;
+    a.textContent = heading.textContent.replace(/^#\s*/, '').replace(/¶$/, '');
+    a.setAttribute('data-heading-id', heading.id);
+    
+    if (heading.tagName === 'H2') {
+      li.appendChild(a);
+      tocList.appendChild(li);
+      currentH2 = li;
+      currentUl = null;
+    } else if (heading.tagName === 'H3' && currentH2) {
+      if (!currentUl) {
+        currentUl = document.createElement('ul');
+        currentH2.appendChild(currentUl);
+      }
+      li.appendChild(a);
+      currentUl.appendChild(li);
+    }
+  });
+  
+  // Highlight active section on scroll
+  const tocLinks = tocList.querySelectorAll('a');
+  
+  function updateActiveLink() {
+    let current = '';
+    const scrollPos = window.scrollY + 100;
+    
+    headings.forEach(function(heading) {
+      if (heading.offsetTop <= scrollPos) {
+        current = heading.id;
+      }
+    });
+    
+    tocLinks.forEach(function(link) {
+      link.classList.remove('active');
+      if (link.getAttribute('data-heading-id') === current) {
+        link.classList.add('active');
+      }
+    });
+  }
+  
+  window.addEventListener('scroll', updateActiveLink);
+  updateActiveLink();
+  
+  // Smooth scroll on click
+  tocLinks.forEach(function(link) {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const targetId = this.getAttribute('href').slice(1);
+      const target = document.getElementById(targetId);
+      if (target) {
+        window.scrollTo({
+          top: target.offsetTop - 80,
+          behavior: 'smooth'
+        });
+        history.pushState(null, null, '#' + targetId);
+      }
+    });
+  });
+});
+</script>
+{% endif %}
