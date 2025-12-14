@@ -5,6 +5,7 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 description = "Core engine for ZDS (Zippy Data System)"
+readme = "README.md"
 
 [dependencies]
 serde.workspace = true
