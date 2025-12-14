@@ -157,7 +157,7 @@ jobs:
           path: crates/zippy_nodejs
       
       - name: Publish to npm
-        run: npm publish --access public
+        run: npm publish --access public --ignore-scripts
         working-directory: crates/zippy_nodejs
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
