@@ -90,7 +90,10 @@ a {
 }
 
 .nav-footer-custom {
-  display: block !important;
+  display: none;
+  @include mq(lg) {
+    display: block;
+  }
   margin-top: 1.5rem;
   padding: 0 0.5rem;
   font-size: 0.8rem;
@@ -798,7 +801,7 @@ tbody {
     
     .label {
       font-size: 0.7rem;
-      color: $gray-400;
+      color: white;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       margin-top: 0.5rem;
