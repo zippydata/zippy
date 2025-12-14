@@ -152,7 +152,7 @@ jobs:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Upgrade npm (required for trusted publishing)
+      - name: Upgrade npm
         run: npm install -g npm@latest
       
       - name: Download all artifacts
