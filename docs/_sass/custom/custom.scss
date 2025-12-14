@@ -44,6 +44,21 @@ body {
   color: $gray-700;
 }
 
+// ============================================
+// Header + Navigation Controls
+// ============================================
+.site-title,
+.site-button {
+  background: transparent !important;
+  background-image: none !important;
+}
+
+.site-title:hover,
+.site-button:hover {
+  background: transparent !important;
+  background-image: none !important;
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
   color: $gray-900;
@@ -87,11 +102,112 @@ a {
   }
 }
 
-// Fix nav list - prevent any negative margins
-.site-nav {
-  overflow: hidden !important;
-  width: 100% !important;
-  padding: 0 !important;
+// ============================================
+// Mobile Menu - Full Screen Overlay
+// ============================================
+@media (max-width: 799px) {
+  .side-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100% !important;
+    height: auto;
+    max-height: 100vh;
+    z-index: 1000;
+    background: $gray-50;
+    border-right: none;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  // Header row with logo and hamburger
+  .site-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 1rem;
+    background: $gray-50;
+    border-bottom: 1px solid $gray-200;
+  }
+  
+  // Navigation - hidden by default
+  .site-nav {
+    display: none !important;
+    width: 100% !important;
+    padding: 0 !important;
+    background: white;
+    
+    &.nav-open {
+      display: block !important;
+      border-bottom: 1px solid $gray-200;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+  }
+  
+  // Nav items full width with better touch targets
+  .nav-list {
+    padding: 0.5rem 0 !important;
+    
+    .nav-list-item {
+      .nav-list-link {
+        display: block;
+        padding: 0.875rem 1.5rem !important;
+        font-size: 1rem;
+        color: $gray-700;
+        border-bottom: 1px solid $gray-100;
+        
+        &:hover, &:active {
+          background: $gray-100;
+        }
+        
+        &.active {
+          color: $zippy-blue-dark;
+          font-weight: 600;
+          background: rgba($zippy-blue, 0.05);
+          border-left: 3px solid $zippy-blue;
+        }
+      }
+      
+      // Nested nav
+      > .nav-list {
+        padding-left: 0 !important;
+        margin-left: 0 !important;
+        
+        .nav-list-link {
+          padding-left: 2.5rem !important;
+          font-size: 0.9rem;
+        }
+      }
+    }
+  }
+  
+  // Main content pushed down
+  .main {
+    margin-left: 0 !important;
+    padding-top: 60px;
+  }
+  
+  // Search in mobile menu
+  .search {
+    padding: 1rem 1.5rem;
+    background: white;
+    border-bottom: 1px solid $gray-200;
+  }
+  
+  .search-input {
+    font-size: 16px; // Prevent iOS zoom
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+  }
+}
+
+// Fix nav list - prevent any negative margins (desktop)
+@media (min-width: 800px) {
+  .site-nav {
+    overflow: hidden !important;
+    width: 100% !important;
+    padding: 0 !important;
+  }
 }
 
 .nav-list {
@@ -144,10 +260,13 @@ a {
 // ============================================
 .main-content {
   padding: 2rem 3rem;
-
   padding-right: 280px;
   
-  @media (max-width: 768px) {
+  @media (max-width: 1399px) {
+    padding-right: 3rem;
+  }
+  
+  @media (max-width: 799px) {
     padding: 1.5rem 1rem;
   }
 }
@@ -897,7 +1016,18 @@ div.highlighter-rouge:hover .code-copy-btn {
 // ============================================
 // Responsive adjustments
 // ============================================
-@media (max-width: 768px) {
+@media (max-width: 799px) {
+  .aux-nav,
+  .side-bar .aux-nav,
+  nav.aux-nav,
+  nav[aria-label="Auxiliary"] {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
   .hero h1 {
     font-size: 2rem;
   }
@@ -906,13 +1036,33 @@ div.highlighter-rouge:hover .code-copy-btn {
     font-size: 1rem;
   }
   
+  .hero .btn {
+    display: block;
+    margin: 0.5rem auto;
+    max-width: 200px;
+  }
+  
   .stats-banner .stat .value {
     font-size: 1.5rem;
   }
   
-  .main-content {
+  // Tables scroll horizontally on mobile
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  // Code blocks
+  pre.highlight {
+    font-size: 0.8rem;
     padding: 1rem;
   }
+  
+  // Headings
+  h1 { font-size: 1.75rem; }
+  h2 { font-size: 1.5rem; }
+  h3 { font-size: 1.125rem; }
 }
 
 // ============================================

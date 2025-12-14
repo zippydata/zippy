@@ -40,6 +40,7 @@ $search-result-inline-code-color: $gray-300;
 $btn-primary-color: $zippy-blue;
 $base-button-color: $zippy-blue;
 
-// Fix sidebar overflow
-$content-width: 100%;
-$nav-width: 224px;
+// Fix sidebar overflow while keeping units compatible with theme calcs
+$content-width: 72rem;
+$nav-width: 14rem;
+$nav-width-md: 14rem;
