@@ -20,33 +20,34 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        include:
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-          - os: macos-latest
-            target: universal2-apple-darwin
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+      include:
+        - os: ubuntu-latest
+          target: x86_64-unknown-linux-gnu
+        - os: macos-latest
+          target: universal2-apple-darwin
+        - os: windows-latest
+          target: x86_64-pc-windows-msvc
     steps:
       - uses: actions/checkout@v4
       
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-      
+          python-version: ${{ matrix.python-version }}
+
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist --find-interpreter
+          args: --release --out dist
           working-directory: crates/zippy_python
           manylinux: auto
-      
+
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-${{ matrix.os }}
+          name: wheels-${{ matrix.os }}-py${{ matrix.python-version }}
           path: crates/zippy_python/dist/*.whl
 
   # Build source distribution
@@ -89,21 +90,21 @@ jobs:
       
       - name: Install dependencies
         run: npm ci
-        working-directory: crates/zippy_nodejs
+        working-directory: nodejs
       
       - name: Build native module
-        run: npm run build -- --release
-        working-directory: crates/zippy_nodejs
+        run: npm run build
+        working-directory: nodejs
       
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: nodejs-${{ matrix.os }}
           path: |
-            crates/zippy_nodejs/*.node
-            crates/zippy_nodejs/index.js
-            crates/zippy_nodejs/index.d.ts
-            crates/zippy_nodejs/package.json
+            nodejs/*.node
+            nodejs/index.js
+            nodejs/index.d.ts
+            nodejs/package.json
 
   # Publish to PyPI using trusted publishing
   publish-pypi:
