@@ -41,14 +41,14 @@ jobs:
         with:
           target: ${{ matrix.target }}
           args: --release --out dist
-          working-directory: crates/zippy_python
+          working-directory: python
           manylinux: auto
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
           name: wheels-${{ matrix.os }}-py${{ matrix.python-version }}
-          path: crates/zippy_python/dist/*.whl
+          path: python/dist/*.whl
 
   # Build source distribution
   build-sdist:
@@ -62,13 +62,13 @@ jobs:
         with:
           command: sdist
           args: --out dist
-          working-directory: crates/zippy_python
+          working-directory: python
       
       - name: Upload sdist
         uses: actions/upload-artifact@v4
         with:
           name: sdist
-          path: crates/zippy_python/dist/*.tar.gz
+          path: python/dist/*.tar.gz
 
   # Build Node.js native modules
   build-nodejs:
