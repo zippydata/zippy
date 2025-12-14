@@ -1,5 +1,5 @@
 [package]
-name = "zippy_core"
+name = "zippy_data"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true

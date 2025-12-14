@@ -288,7 +288,7 @@ node benchmark_io.js -n=500000
 
 ## Rust Core Benchmarks
 
-The Rust core library (`zippy_core`) provides the underlying engine for all language bindings. Benchmarking the core directly eliminates FFI overhead and shows the raw engine performance.
+The Rust core library (`zippy_data`) provides the underlying engine for all language bindings. Benchmarking the core directly eliminates FFI overhead and shows the raw engine performance.
 
 ### Comparative Benchmarks
 
@@ -297,7 +297,7 @@ We compare ZDS against SQLite (via rusqlite) and Sled for JSON document workload
 #### Running Benchmarks
 
 ```bash
-cd crates/zippy_core
+cd crates/zippy_data
 
 # Run all comparison benchmarks
 cargo bench --bench comparison

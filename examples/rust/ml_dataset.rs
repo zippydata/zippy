@@ -14,7 +14,7 @@ use rand::Rng;
 use serde_json::json;
 use std::path::PathBuf;
 use std::time::Instant;
-use zippy_core::{FastStore, Layout};
+use zippy_data::{FastStore, Layout};
 
 fn main() -> Result<()> {
     let data_path = setup_data_dir()?;

@@ -10,7 +10,7 @@ Zippy publishes to multiple package registries:
 |----------|----------|--------------|
 | Python | PyPI | `zippy-data` |
 | Node.js | npm | `@zippydata/core` |
-| Rust | crates.io | `zippy-core` |
+| Rust | crates.io | `zippy-data` |
 
 All releases are automated via GitHub Actions with trusted publishing (no manual token management).
 
@@ -41,7 +41,7 @@ Update version in ALL of these files before release:
 python/zippy/__init__.py          __version__ = "0.1.0"
 python/pyproject.toml             version = "0.1.0"
 nodejs/package.json               "version": "0.1.0"
-crates/zippy_core/Cargo.toml      version = "0.1.0"
+crates/zippy_data/Cargo.toml      version = "0.1.0"
 crates/zippy_python/Cargo.toml    version = "0.1.0"
 crates/zippy_nodejs/Cargo.toml    version = "0.1.0"
 ```
@@ -156,7 +156,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - run: cargo publish -p zippy-core
+      - run: cargo publish -p zippy-data
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_TOKEN }}
 
@@ -319,7 +319,7 @@ git push origin v0.1.0
 - [ ] GitHub Actions workflow completed successfully
 - [ ] PyPI package available: `pip install zippy-data==0.1.0`
 - [ ] npm package available: `npm install @zippydata/core@0.1.0`
-- [ ] crates.io package available: `cargo add zippy-core@0.1.0`
+- [ ] crates.io package available: `cargo add zippy-data@0.1.0`
 - [ ] GitHub Release created with artifacts
 - [ ] Documentation site updated (if applicable)
 
@@ -373,7 +373,7 @@ npm unpublish @zippydata/core@0.1.0
 
 ### crates.io
 ```bash
-cargo yank --version 0.1.0 zippy-core
+cargo yank --version 0.1.0 zippy-data
 ```
 
 ### GitHub

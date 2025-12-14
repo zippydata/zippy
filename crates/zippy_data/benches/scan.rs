@@ -3,7 +3,7 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use serde_json::json;
 use tempfile::TempDir;
-use zippy_core::{writer::BufferedWriter, Engine, Layout, WriteConfig};
+use zippy_data::{writer::BufferedWriter, Engine, Layout, WriteConfig};
 
 fn setup_benchmark_data(doc_count: usize) -> (TempDir, std::path::PathBuf) {
     let tmp = TempDir::new().unwrap();
@@ -100,7 +100,7 @@ fn bench_filtered_scan(c: &mut Criterion) {
 
     group.bench_function("equality_filter", |b| {
         let engine = Engine::open(&root, "bench").unwrap();
-        let pred = zippy_core::Predicate::eq("active", true);
+        let pred = zippy_data::Predicate::eq("active", true);
         b.iter(|| {
             let scanner = engine.scan(Some(&pred), None).unwrap();
             let docs: Vec<_> = scanner.collect();

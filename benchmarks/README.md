@@ -178,7 +178,7 @@ The Rust core library benchmarks measure raw engine performance and compare agai
 ### Running Rust Benchmarks
 
 ```bash
-cd crates/zippy_core
+cd crates/zippy_data
 
 # Run comparison benchmarks (ZDS vs SQLite vs Sled)
 cargo bench --bench comparison

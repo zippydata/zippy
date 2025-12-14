@@ -67,7 +67,7 @@ Everything you need to build with ZDS—from quick starts to deep dives.
 |----------|---------|
 | **Python** | `pip install zippy-data` |
 | **Node.js** | `npm install @zippydata/core` |
-| **Rust** | `cargo add zippy_core` |
+| **Rust** | `cargo add zippy_data` |
 | **CLI** | [Download from releases](https://github.com/zippydata/zippy/releases) |
 
 ## Core Concepts

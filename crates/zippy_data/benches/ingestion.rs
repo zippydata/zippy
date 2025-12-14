@@ -3,7 +3,7 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use serde_json::json;
 use tempfile::TempDir;
-use zippy_core::{
+use zippy_data::{
     writer::{BufferedWriter, SyncWriter, WriteConfig},
     Layout,
 };

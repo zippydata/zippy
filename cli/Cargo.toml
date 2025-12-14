@@ -11,7 +11,7 @@ name = "zippy"
 path = "src/main.rs"
 
 [dependencies]
-zippy_core.workspace = true
+zippy_data.workspace = true
 clap = { version = "4", features = ["derive"] }
 serde_json.workspace = true
 anyhow.workspace = true

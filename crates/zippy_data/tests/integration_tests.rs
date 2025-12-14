@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 use serde_json::json;
 use tempfile::TempDir;
-use zippy_core::{
+use zippy_data::{
     writer::{BufferedWriter, SyncWriter, WriteConfig},
     Engine, FastStore, Layout, Result,
 };
@@ -232,7 +232,7 @@ mod engine {
 
         let engine = Engine::open(&root, "test")?;
 
-        let pred = zippy_core::Predicate::eq("category", "A");
+        let pred = zippy_data::Predicate::eq("category", "A");
         let scanner = engine.scan(Some(&pred), None)?;
         let docs: Vec<serde_json::Value> = scanner.collect::<Result<Vec<_>>>()?;
 
@@ -407,7 +407,7 @@ mod cross_component {
 // =============================================================================
 
 mod layout {
-    use zippy_core::container::{pack, unpack};
+    use zippy_data::container::{pack, unpack};
 
     use super::*;
 

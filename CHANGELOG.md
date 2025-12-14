@@ -34,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Random access by document ID
 - Full scan iteration
 
-#### Rust Crate (`zippy-core`)
+#### Rust Crate (`zippy-data`)
 - `FastStore`: Memory-mapped JSONL with FxHashMap index
 - SIMD-accelerated JSON parsing (simd-json)
 - SIMD newline search (memchr)

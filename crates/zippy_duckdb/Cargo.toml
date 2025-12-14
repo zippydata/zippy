@@ -10,7 +10,7 @@ description = "DuckDB extension for ZDS (Zippy Data System)"
 crate-type = ["cdylib"]
 
 [dependencies]
-zippy_core.workspace = true
+zippy_data.workspace = true
 serde_json.workspace = true
 
 # DuckDB extension dependencies (stubbed for now)

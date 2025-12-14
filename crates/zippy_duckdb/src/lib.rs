@@ -18,7 +18,7 @@
 
 use std::ffi::{c_char, c_void};
 
-use zippy_core::{Engine, Scanner};
+use zippy_data::{Engine, Scanner};
 
 /// Extension version (must match DuckDB version for compatibility).
 pub const EXTENSION_VERSION: &str = "0.1.0";

@@ -11,10 +11,10 @@
 use anyhow::Result;
 use serde_json::json;
 use std::path::PathBuf;
-use zippy_core::{Engine, FastStore, Layout};
+use zippy_data::{Engine, FastStore, Layout};
 
 fn main() -> Result<()> {
-    println!("ZDS Core Version: {}\n", zippy_core::ZDS_VERSION);
+    println!("ZDS Core Version: {}\n", zippy_data::ZDS_VERSION);
 
     let data_path = setup_data_dir()?;
     println!("Output directory: {}\n", data_path.display());
@@ -132,7 +132,7 @@ fn example_engine(data_path: &PathBuf) -> Result<()> {
     println!("Example 2: Engine API (JSON file-based)");
     println!("{}", "=".repeat(60));
 
-    use zippy_core::writer::SyncWriter;
+    use zippy_data::writer::SyncWriter;
 
     // Create collection with SyncWriter (individual JSON files)
     let mut writer = SyncWriter::new(data_path, "products")?;
@@ -205,7 +205,7 @@ fn example_scanning(data_path: &PathBuf) -> Result<()> {
     }
 
     // Scan with predicate
-    use zippy_core::Predicate;
+    use zippy_data::Predicate;
     println!("\nElectronics only (predicate):");
     let pred = Predicate::eq("category", "Electronics");
     let mut scanner = engine.scan(Some(&pred), None)?;

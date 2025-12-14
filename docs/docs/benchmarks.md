@@ -135,7 +135,7 @@ node benchmark_io.js -n=500000
 For maximum performance, the Rust core library provides comparative benchmarks against SQLite and Sled.
 
 ```bash
-cd crates/zippy_core
+cd crates/zippy_data
 cargo bench --bench comparison
 ```
 
@@ -248,5 +248,5 @@ cd benchmarks/python && python benchmark_io.py
 cd benchmarks/nodejs && npm install && node benchmark_io.js
 
 # Rust
-cd crates/zippy_core && cargo bench
+cd crates/zippy_data && cargo bench
 ```

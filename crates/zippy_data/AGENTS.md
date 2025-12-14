@@ -1,11 +1,11 @@
-# crates/zippy_core/AGENTS.md
+# crates/zippy_data/AGENTS.md
 
-Consumer guide for the **`zippy_core` Rust crate**, the embeddable ZDS engine. Use this when you need maximum performance or want to integrate the format directly inside a Rust application/service.
+Consumer guide for the **`zippy_data` Rust crate**, the embeddable ZDS engine. Use this when you need maximum performance or want to integrate the format directly inside a Rust application/service.
 
 ## Install
 
 ```bash
-cargo add zippy_core
+cargo add zippy_data
 
 # With optional serde helpers
 cargo add serde_json
@@ -16,7 +16,7 @@ Requires Rust 1.75+. The crate is `no_std`? (no) – it targets std with mmap su
 ## Quick Start
 
 ```rust
-use zippy_core::{FastStore, Result};
+use zippy_data::{FastStore, Result};
 use serde_json::json;
 
 fn main() -> Result<()> {
@@ -38,7 +38,7 @@ fn main() -> Result<()> {
 | Random lookups | `store.get(id)` or `Engine::get_document(id)` |
 | Sequential scan with predicate | `Engine::scan(Some(&Predicate::eq("field", value)), None)` |
 | File-per-doc access | `Engine` (reads `docs/` layout) |
-| Pack/unpack | `zippy_core::container::{pack, unpack}` |
+| Pack/unpack | `zippy_data::container::{pack, unpack}` |
 
 ## Patterns
 
@@ -71,7 +71,7 @@ fn main() -> Result<()> {
 
 ## References
 
-* Crate docs: `cargo doc --open -p zippy_core`
+* Crate docs: `cargo doc --open -p zippy_data`
 * Format spec: [`docs/docs/format.md`](../docs/docs/format.md)
 * Benchmarks: [`BENCHMARK.md`](../../BENCHMARK.md)
 * CLI companion: `zippy scan ./data -c train`

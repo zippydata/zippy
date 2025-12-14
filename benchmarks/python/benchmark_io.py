@@ -50,7 +50,7 @@ from zippy import FastZDSStore
 
 NATIVE_AVAILABLE = False
 try:
-    import _zippy_core as native
+    import _zippy_data as native
     NATIVE_AVAILABLE = True
 except ImportError:
     native = None

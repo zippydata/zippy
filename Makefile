@@ -82,7 +82,7 @@ check: lint test
 bench: bench-rust
 
 bench-rust:
-	cd crates/zippy_core && cargo bench
+	cd crates/zippy_data && cargo bench
 
 bench-python:
 	cd benchmarks/python && python benchmark_io.py

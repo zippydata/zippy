@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
-use zippy_core::{
+use zippy_data::{
     container::{pack, unpack},
     engine::Engine,
     index::IndexRegistry,
@@ -250,7 +250,7 @@ fn cmd_init(path: &PathBuf, collection: &str, strict: bool) -> Result<()> {
     Layout::init_collection(path, collection).context("Failed to create collection")?;
 
     // Create manifest
-    let manifest = zippy_core::engine::Manifest::new(collection, strict);
+    let manifest = zippy_data::engine::Manifest::new(collection, strict);
     let manifest_path = Layout::manifest_file(path, collection);
     let manifest_json = serde_json::to_string_pretty(&manifest)?;
     std::fs::write(&manifest_path, manifest_json)?;

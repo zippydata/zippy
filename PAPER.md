@@ -238,7 +238,7 @@ This isn't novel—it's deliberately unoriginal. Novelty in file formats creates
                                    │
                                    ▼
                     ┌─────────────────────────────┐
-                    │      zippy_core (Rust)      │
+                    │      zippy_data (Rust)      │
                     │                             │
                     │  ┌─────────┐ ┌───────────┐  │
                     │  │FastStore│ │  ZipStore │  │
@@ -778,7 +778,7 @@ df.to_zds("./output", collection="processed")
 ### 6.2 Node.js API
 
 ```javascript
-const { ZdsStore } = require('zippy-core');
+const { ZdsStore } = require('zippy-data');
 
 // Open store
 const store = ZdsStore.open('./data', 'train', 100000);

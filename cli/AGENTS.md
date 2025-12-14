@@ -67,4 +67,4 @@ zippy stats ./store --json | jq
 * CLI docs: [`docs/docs/cli.md`](../docs/docs/cli.md)
 * Examples: `examples/cli/`
 * Format spec: [`docs/docs/format.md`](../docs/docs/format.md)
-* Programmatic APIs: Python (`zippy-data`), Node (`@zippydata/core`), Rust (`zippy_core`)
+* Programmatic APIs: Python (`zippy-data`), Node (`@zippydata/core`), Rust (`zippy_data`)

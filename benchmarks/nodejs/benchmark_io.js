@@ -34,13 +34,13 @@ try {
     let bindingPath;
     
     if (platform === 'darwin' && arch === 'arm64') {
-        bindingPath = '../../nodejs/zippy-core.darwin-arm64.node';
+        bindingPath = '../../nodejs/zippy-data.darwin-arm64.node';
     } else if (platform === 'darwin' && arch === 'x64') {
-        bindingPath = '../../nodejs/zippy-core.darwin-x64.node';
+        bindingPath = '../../nodejs/zippy-data.darwin-x64.node';
     } else if (platform === 'linux' && arch === 'x64') {
-        bindingPath = '../../nodejs/zippy-core.linux-x64-gnu.node';
+        bindingPath = '../../nodejs/zippy-data.linux-x64-gnu.node';
     } else {
-        bindingPath = '../../nodejs/zippy-core.node';
+        bindingPath = '../../nodejs/zippy-data.node';
     }
     
     const binding = require(bindingPath);

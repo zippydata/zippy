@@ -4,7 +4,7 @@ use std::sync::Mutex;
 
 use napi::bindgen_prelude::*;
 use napi_derive::napi;
-use zippy_core::FastStore;
+use zippy_data::FastStore;
 
 /// High-performance ZDS Store backed by Rust FastStore (JSONL-based).
 #[napi]
@@ -190,7 +190,7 @@ pub struct StoreInfo {
 /// Get the ZDS version.
 #[napi]
 pub fn version() -> &'static str {
-    zippy_core::ZDS_VERSION
+    zippy_data::ZDS_VERSION
 }
 
 /// Bulk write helper for high-throughput ingestion.

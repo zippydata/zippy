@@ -8,7 +8,7 @@ Zippy Data System (ZDS) offers multiple packages to **consume** the dataset form
 |----------|---------|---------|-------|
 | Python ML / data science | `zippy-data` | `pip install zippy-data[all]` | [python/AGENTS.md](python/AGENTS.md) |
 | Node.js services / ETL | `@zippydata/core` | `npm install @zippydata/core` | [nodejs/AGENTS.md](nodejs/AGENTS.md) |
-| Native Rust embedding | `zippy_core` | `cargo add zippy_core` | [crates/zippy_core/AGENTS.md](crates/zippy_core/AGENTS.md) |
+| Native Rust embedding | `zippy_data` | `cargo add zippy_data` | [crates/zippy_data/AGENTS.md](crates/zippy_data/AGENTS.md) |
 | Shell / pipelines | `zippy` CLI | `cargo install --path cli` or download binary | [cli/AGENTS.md](cli/AGENTS.md) |
 
 Each package exposes the same dataset layout (JSONL + index). Pick the runtime you need and follow its AGENT file for detailed usage snippets, troubleshooting, and advanced workflows.
@@ -33,7 +33,7 @@ Each package exposes the same dataset layout (JSONL + index). Pick the runtime y
 
 * **Python usage** – [python/AGENTS.md](python/AGENTS.md), [`docs/docs/python.md`](docs/docs/python.md), examples under `examples/python/`
 * **Node.js usage** – [nodejs/AGENTS.md](nodejs/AGENTS.md), [`docs/docs/nodejs.md`](docs/docs/nodejs.md)
-* **Rust embedding** – [crates/zippy_core/AGENTS.md](crates/zippy_core/AGENTS.md), [`PAPER.md`](PAPER.md)
+* **Rust embedding** – [crates/zippy_data/AGENTS.md](crates/zippy_data/AGENTS.md), [`PAPER.md`](PAPER.md)
 * **CLI commands** – [cli/AGENTS.md](cli/AGENTS.md), [`docs/docs/cli.md`](docs/docs/cli.md)
 * **Format + benchmarks** – [`docs/docs/format.md`](docs/docs/format.md), [`BENCHMARK.md`](BENCHMARK.md)
 * **Security** – [`SECURITY.md`](SECURITY.md)

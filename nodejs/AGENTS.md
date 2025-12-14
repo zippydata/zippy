@@ -63,7 +63,7 @@ store.close();
 * `store.flush()` – call before handing off to another process.
 * Env variables:
   * `ZDS_NODE_LOG=debug` – verbose native logging
-  * `RUST_LOG=zippy_core=debug` – deeper tracing during debugging
+  * `RUST_LOG=zippy_data=debug` – deeper tracing during debugging
 
 ## Troubleshooting
 

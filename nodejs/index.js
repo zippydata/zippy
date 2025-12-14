@@ -32,10 +32,10 @@ switch (platform) {
   case 'android':
     switch (arch) {
       case 'arm64':
-        localFileExisted = existsSync(join(__dirname, 'zippy-core.android-arm64.node'))
+        localFileExisted = existsSync(join(__dirname, 'zippy-data.android-arm64.node'))
         try {
           if (localFileExisted) {
-            nativeBinding = require('./zippy-core.android-arm64.node')
+            nativeBinding = require('./zippy-data.android-arm64.node')
           } else {
             nativeBinding = require('@zippydata/core-android-arm64')
           }
@@ -44,10 +44,10 @@ switch (platform) {
         }
         break
       case 'arm':
-        localFileExisted = existsSync(join(__dirname, 'zippy-core.android-arm-eabi.node'))
+        localFileExisted = existsSync(join(__dirname, 'zippy-data.android-arm-eabi.node'))
         try {
           if (localFileExisted) {
-            nativeBinding = require('./zippy-core.android-arm-eabi.node')
+            nativeBinding = require('./zippy-data.android-arm-eabi.node')
           } else {
             nativeBinding = require('@zippydata/core-android-arm-eabi')
           }
@@ -63,11 +63,11 @@ switch (platform) {
     switch (arch) {
       case 'x64':
         localFileExisted = existsSync(
-          join(__dirname, 'zippy-core.win32-x64-msvc.node')
+          join(__dirname, 'zippy-data.win32-x64-msvc.node')
         )
         try {
           if (localFileExisted) {
-            nativeBinding = require('./zippy-core.win32-x64-msvc.node')
+            nativeBinding = require('./zippy-data.win32-x64-msvc.node')
           } else {
             nativeBinding = require('@zippydata/core-win32-x64-msvc')
           }
@@ -77,11 +77,11 @@ switch (platform) {
         break
       case 'ia32':
         localFileExisted = existsSync(
-          join(__dirname, 'zippy-core.win32-ia32-msvc.node')
+          join(__dirname, 'zippy-data.win32-ia32-msvc.node')
         )
         try {
           if (localFileExisted) {
-            nativeBinding = require('./zippy-core.win32-ia32-msvc.node')
+            nativeBinding = require('./zippy-data.win32-ia32-msvc.node')
           } else {
             nativeBinding = require('@zippydata/core-win32-ia32-msvc')
           }
@@ -91,11 +91,11 @@ switch (platform) {
         break
       case 'arm64':
         localFileExisted = existsSync(
-          join(__dirname, 'zippy-core.win32-arm64-msvc.node')
+          join(__dirname, 'zippy-data.win32-arm64-msvc.node')
         )
         try {
           if (localFileExisted) {
-            nativeBinding = require('./zippy-core.win32-arm64-msvc.node')
+            nativeBinding = require('./zippy-data.win32-arm64-msvc.node')
           } else {
             nativeBinding = require('@zippydata/core-win32-arm64-msvc')
           }
@@ -108,10 +108,10 @@ switch (platform) {
     }
     break
   case 'darwin':
-    localFileExisted = existsSync(join(__dirname, 'zippy-core.darwin-universal.node'))
+    localFileExisted = existsSync(join(__dirname, 'zippy-data.darwin-universal.node'))
     try {
       if (localFileExisted) {
-        nativeBinding = require('./zippy-core.darwin-universal.node')
+        nativeBinding = require('./zippy-data.darwin-universal.node')
       } else {
         nativeBinding = require('@zippydata/core-darwin-universal')
       }
@@ -119,10 +119,10 @@ switch (platform) {
     } catch {}
     switch (arch) {
       case 'x64':
-        localFileExisted = existsSync(join(__dirname, 'zippy-core.darwin-x64.node'))
+        localFileExisted = existsSync(join(__dirname, 'zippy-data.darwin-x64.node'))
         try {
           if (localFileExisted) {
-            nativeBinding = require('./zippy-core.darwin-x64.node')
+            nativeBinding = require('./zippy-data.darwin-x64.node')
           } else {
             nativeBinding = require('@zippydata/core-darwin-x64')
           }
@@ -132,11 +132,11 @@ switch (platform) {
         break
       case 'arm64':
         localFileExisted = existsSync(
-          join(__dirname, 'zippy-core.darwin-arm64.node')
+          join(__dirname, 'zippy-data.darwin-arm64.node')
         )
         try {
           if (localFileExisted) {
-            nativeBinding = require('./zippy-core.darwin-arm64.node')
+            nativeBinding = require('./zippy-data.darwin-arm64.node')
           } else {
             nativeBinding = require('@zippydata/core-darwin-arm64')
           }
@@ -152,10 +152,10 @@ switch (platform) {
     if (arch !== 'x64') {
       throw new Error(`Unsupported architecture on FreeBSD: ${arch}`)
     }
-    localFileExisted = existsSync(join(__dirname, 'zippy-core.freebsd-x64.node'))
+    localFileExisted = existsSync(join(__dirname, 'zippy-data.freebsd-x64.node'))
     try {
       if (localFileExisted) {
-        nativeBinding = require('./zippy-core.freebsd-x64.node')
+        nativeBinding = require('./zippy-data.freebsd-x64.node')
       } else {
         nativeBinding = require('@zippydata/core-freebsd-x64')
       }
@@ -168,11 +168,11 @@ switch (platform) {
       case 'x64':
         if (isMusl()) {
           localFileExisted = existsSync(
-            join(__dirname, 'zippy-core.linux-x64-musl.node')
+            join(__dirname, 'zippy-data.linux-x64-musl.node')
           )
           try {
             if (localFileExisted) {
-              nativeBinding = require('./zippy-core.linux-x64-musl.node')
+              nativeBinding = require('./zippy-data.linux-x64-musl.node')
             } else {
               nativeBinding = require('@zippydata/core-linux-x64-musl')
             }
@@ -181,11 +181,11 @@ switch (platform) {
           }
         } else {
           localFileExisted = existsSync(
-            join(__dirname, 'zippy-core.linux-x64-gnu.node')
+            join(__dirname, 'zippy-data.linux-x64-gnu.node')
           )
           try {
             if (localFileExisted) {
-              nativeBinding = require('./zippy-core.linux-x64-gnu.node')
+              nativeBinding = require('./zippy-data.linux-x64-gnu.node')
             } else {
               nativeBinding = require('@zippydata/core-linux-x64-gnu')
             }
@@ -197,11 +197,11 @@ switch (platform) {
       case 'arm64':
         if (isMusl()) {
           localFileExisted = existsSync(
-            join(__dirname, 'zippy-core.linux-arm64-musl.node')
+            join(__dirname, 'zippy-data.linux-arm64-musl.node')
           )
           try {
             if (localFileExisted) {
-              nativeBinding = require('./zippy-core.linux-arm64-musl.node')
+              nativeBinding = require('./zippy-data.linux-arm64-musl.node')
             } else {
               nativeBinding = require('@zippydata/core-linux-arm64-musl')
             }
@@ -210,11 +210,11 @@ switch (platform) {
           }
         } else {
           localFileExisted = existsSync(
-            join(__dirname, 'zippy-core.linux-arm64-gnu.node')
+            join(__dirname, 'zippy-data.linux-arm64-gnu.node')
           )
           try {
             if (localFileExisted) {
-              nativeBinding = require('./zippy-core.linux-arm64-gnu.node')
+              nativeBinding = require('./zippy-data.linux-arm64-gnu.node')
             } else {
               nativeBinding = require('@zippydata/core-linux-arm64-gnu')
             }
@@ -226,11 +226,11 @@ switch (platform) {
       case 'arm':
         if (isMusl()) {
           localFileExisted = existsSync(
-            join(__dirname, 'zippy-core.linux-arm-musleabihf.node')
+            join(__dirname, 'zippy-data.linux-arm-musleabihf.node')
           )
           try {
             if (localFileExisted) {
-              nativeBinding = require('./zippy-core.linux-arm-musleabihf.node')
+              nativeBinding = require('./zippy-data.linux-arm-musleabihf.node')
             } else {
               nativeBinding = require('@zippydata/core-linux-arm-musleabihf')
             }
@@ -239,11 +239,11 @@ switch (platform) {
           }
         } else {
           localFileExisted = existsSync(
-            join(__dirname, 'zippy-core.linux-arm-gnueabihf.node')
+            join(__dirname, 'zippy-data.linux-arm-gnueabihf.node')
           )
           try {
             if (localFileExisted) {
-              nativeBinding = require('./zippy-core.linux-arm-gnueabihf.node')
+              nativeBinding = require('./zippy-data.linux-arm-gnueabihf.node')
             } else {
               nativeBinding = require('@zippydata/core-linux-arm-gnueabihf')
             }
@@ -255,11 +255,11 @@ switch (platform) {
       case 'riscv64':
         if (isMusl()) {
           localFileExisted = existsSync(
-            join(__dirname, 'zippy-core.linux-riscv64-musl.node')
+            join(__dirname, 'zippy-data.linux-riscv64-musl.node')
           )
           try {
             if (localFileExisted) {
-              nativeBinding = require('./zippy-core.linux-riscv64-musl.node')
+              nativeBinding = require('./zippy-data.linux-riscv64-musl.node')
             } else {
               nativeBinding = require('@zippydata/core-linux-riscv64-musl')
             }
@@ -268,11 +268,11 @@ switch (platform) {
           }
         } else {
           localFileExisted = existsSync(
-            join(__dirname, 'zippy-core.linux-riscv64-gnu.node')
+            join(__dirname, 'zippy-data.linux-riscv64-gnu.node')
           )
           try {
             if (localFileExisted) {
-              nativeBinding = require('./zippy-core.linux-riscv64-gnu.node')
+              nativeBinding = require('./zippy-data.linux-riscv64-gnu.node')
             } else {
               nativeBinding = require('@zippydata/core-linux-riscv64-gnu')
             }
@@ -283,11 +283,11 @@ switch (platform) {
         break
       case 's390x':
         localFileExisted = existsSync(
-          join(__dirname, 'zippy-core.linux-s390x-gnu.node')
+          join(__dirname, 'zippy-data.linux-s390x-gnu.node')
         )
         try {
           if (localFileExisted) {
-            nativeBinding = require('./zippy-core.linux-s390x-gnu.node')
+            nativeBinding = require('./zippy-data.linux-s390x-gnu.node')
           } else {
             nativeBinding = require('@zippydata/core-linux-s390x-gnu')
           }

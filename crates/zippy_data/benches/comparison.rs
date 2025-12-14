@@ -12,7 +12,7 @@ use rand::Rng;
 use rusqlite::{params, Connection};
 use serde_json::json;
 use tempfile::TempDir;
-use zippy_core::{FastStore, Layout};
+use zippy_data::{FastStore, Layout};
 
 const RECORD_COUNTS: &[usize] = &[1000, 10000, 100000];
 const RANDOM_LOOKUP_COUNT: usize = 1000;

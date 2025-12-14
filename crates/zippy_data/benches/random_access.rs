@@ -3,7 +3,7 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use serde_json::json;
 use tempfile::TempDir;
-use zippy_core::{writer::BufferedWriter, Engine, Layout, WriteConfig};
+use zippy_data::{writer::BufferedWriter, Engine, Layout, WriteConfig};
 
 fn setup_benchmark_data(doc_count: usize) -> (TempDir, std::path::PathBuf) {
     let tmp = TempDir::new().unwrap();

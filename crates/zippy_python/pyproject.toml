@@ -21,4 +21,4 @@ classifiers = [
 
 [tool.maturin]
 features = ["pyo3/extension-module"]
-module-name = "zippy._zippy_core"
+module-name = "zippy._zippy_data"

@@ -7,11 +7,11 @@ license.workspace = true
 description = "Python bindings for ZDS (Zippy Data System)"
 
 [lib]
-name = "_zippy_core"
+name = "_zippy_data"
 crate-type = ["cdylib"]
 
 [dependencies]
-zippy_core.workspace = true
+zippy_data.workspace = true
 pyo3 = { version = "0.22", features = ["extension-module"] }
 serde_json.workspace = true
 

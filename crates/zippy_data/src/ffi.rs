@@ -1,4 +1,4 @@
-//! C FFI for libzippy_core.
+//! C FFI for libzippy_data.
 //!
 //! Provides a stable C ABI for bindings (Python, Node, DuckDB).
 

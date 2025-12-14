@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "crates/zippy_core",
+    "crates/zippy_data",
     "crates/zippy_duckdb",
     "crates/zippy_python",
     "crates/zippy_nodejs",
@@ -21,7 +21,7 @@ keywords = ["dataset", "storage", "ml", "ai", "json"]
 categories = ["data-structures", "database", "encoding"]
 
 [workspace.dependencies]
-zippy_core = { path = "crates/zippy_core" }
+zippy_data = { path = "crates/zippy_data" }
 # Serialization - pinned to stable versions
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"

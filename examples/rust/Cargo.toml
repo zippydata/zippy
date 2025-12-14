@@ -17,7 +17,7 @@ name = "ml_dataset"
 path = "ml_dataset.rs"
 
 [dependencies]
-zippy_core = { path = "../../crates/zippy_core" }
+zippy_data = { path = "../../crates/zippy_data" }
 serde_json = "1.0"
 tempfile = "3"
 anyhow = "1.0"

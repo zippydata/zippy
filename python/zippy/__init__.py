@@ -39,7 +39,7 @@ __author__ = "Omar Kamali"
 # Try to import native bindings
 _HAS_NATIVE = False
 try:
-    from ._zippy_core import NativeStore, version as native_version
+    from ._zippy_data import NativeStore, version as native_version
     _HAS_NATIVE = True
 except ImportError:
     NativeStore = None

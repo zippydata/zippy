@@ -7,7 +7,7 @@ nav_order: 5
 # Rust Guide
 {: .no_toc }
 
-The Rust crate `zippy_core` is the foundation of ZDS. It provides zero-copy memory-mapped access, high-throughput writers, and full control over the storage layer. Use it when you need maximum performance or want to embed ZDS in your Rust application.
+The Rust crate `zippy_data` is the foundation of ZDS. It provides zero-copy memory-mapped access, high-throughput writers, and full control over the storage layer. Use it when you need maximum performance or want to embed ZDS in your Rust application.
 
 <details open markdown="block">
   <summary>Table of contents</summary>
@@ -24,7 +24,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-zippy_core = "0.1"
+zippy_data = "0.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 ```
@@ -33,7 +33,7 @@ For async support:
 
 ```toml
 [dependencies]
-zippy_core = { version = "0.1", features = ["async"] }
+zippy_data = { version = "0.1", features = ["async"] }
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -42,7 +42,7 @@ tokio = { version = "1", features = ["full"] }
 ## Quick Start
 
 ```rust
-use zippy_core::{FastStore, Layout, Result};
+use zippy_data::{FastStore, Layout, Result};
 use serde_json::json;
 
 fn main() -> Result<()> {
@@ -112,7 +112,7 @@ The primary high-performance store for most use cases.
 ### Opening a Store
 
 ```rust
-use zippy_core::{FastStore, Layout};
+use zippy_data::{FastStore, Layout};
 
 // First-time setup: create directory structure
 Layout::init_root("./data")?;
@@ -250,7 +250,7 @@ For workflows that benefit from individual files per document.
 ### Opening
 
 ```rust
-use zippy_core::Engine;
+use zippy_data::Engine;
 
 let engine = Engine::open("./data", "train")?;
 println!("Documents: {}", engine.len());
@@ -275,7 +275,7 @@ for id in engine.doc_ids() {
 ### Scanning with Filters
 
 ```rust
-use zippy_core::Predicate;
+use zippy_data::Predicate;
 
 // Scan all documents
 let mut scanner = engine.scan(None, None)?;
@@ -319,7 +319,7 @@ println!("Strict mode: {}", stats.strict_mode);
 Immediate writes for small datasets or when durability per-write is required:
 
 ```rust
-use zippy_core::writer::SyncWriter;
+use zippy_data::writer::SyncWriter;
 use serde_json::json;
 
 let mut writer = SyncWriter::new("./data", "train")?;
@@ -334,7 +334,7 @@ writer.put("doc_002", &json!({"text": "world"}))?;
 High-throughput batched writes:
 
 ```rust
-use zippy_core::writer::{BufferedWriter, WriteConfig};
+use zippy_data::writer::{BufferedWriter, WriteConfig};
 use serde_json::json;
 
 let config = WriteConfig {
@@ -369,7 +369,7 @@ println!("Wrote {} documents", writer.count());
 ### Recipe: ML Dataset Ingestion
 
 ```rust
-use zippy_core::{FastStore, Layout, Result};
+use zippy_data::{FastStore, Layout, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::fs::File;
@@ -415,7 +415,7 @@ fn ingest_dataset(input_path: &str, output_path: &str) -> Result<()> {
 ### Recipe: Parallel Processing
 
 ```rust
-use zippy_core::{FastStore, Result};
+use zippy_data::{FastStore, Result};
 use rayon::prelude::*;
 use serde_json::Value;
 
@@ -449,7 +449,7 @@ fn process_in_parallel(store_path: &str) -> Result<Vec<Value>> {
 ### Recipe: Streaming Export
 
 ```rust
-use zippy_core::{FastStore, Result};
+use zippy_data::{FastStore, Result};
 use std::io::{Write, BufWriter};
 use std::fs::File;
 
@@ -473,7 +473,7 @@ fn export_to_jsonl(store_path: &str, output_path: &str) -> Result<()> {
 ### Recipe: Custom Serialization
 
 ```rust
-use zippy_core::{FastStore, Layout, Result};
+use zippy_data::{FastStore, Layout, Result};
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -517,7 +517,7 @@ fn load_embedding(path: &str, id: &str) -> Result<Embedding> {
 Create portable `.zds` archives:
 
 ```rust
-use zippy_core::container::{pack, unpack};
+use zippy_data::container::{pack, unpack};
 
 // Pack a store directory into a single archive
 pack("./my_dataset", "./my_dataset.zds")?;
@@ -536,7 +536,7 @@ unpack("./my_dataset.zds", "./extracted")?;
 ### Rebuild Index
 
 ```rust
-use zippy_core::IndexRegistry;
+use zippy_data::IndexRegistry;
 
 // Rebuild from JSONL data
 let index = IndexRegistry::rebuild("./data", "train")?;
@@ -565,7 +565,7 @@ if index.contains("doc_001") {
 ## Layout Utilities
 
 ```rust
-use zippy_core::Layout;
+use zippy_data::Layout;
 
 // Initialize store structure
 Layout::init_root("./data")?;
@@ -588,7 +588,7 @@ let data_file = Layout::data_file("./data", "train");
 ## Error Handling
 
 ```rust
-use zippy_core::{Error, Result};
+use zippy_data::{Error, Result};
 
 fn safe_get(store: &FastStore, id: &str) -> Result<Option<serde_json::Value>> {
     match store.get(id) {
@@ -681,7 +681,7 @@ let results: Vec<_> = ids.par_iter()
 Run the built-in benchmarks:
 
 ```bash
-cd crates/zippy_core
+cd crates/zippy_data
 cargo bench
 ```
 

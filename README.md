@@ -373,7 +373,7 @@ See [benchmarks/README.md](benchmarks/README.md) for results.
 ```
 zippy/
 ├── crates/
-│   ├── zippy_core/      # Rust core engine
+│   ├── zippy_data/      # Rust core engine
 │   └── zippy_duckdb/    # DuckDB extension (stub)
 ├── cli/                 # CLI tool
 ├── docs/                # Documentation site (Just-the-Docs)
@@ -394,7 +394,7 @@ zippy/
 
 📚 **Docs & Guides**
 - Docs site: [`docs/`](docs/) → published at https://zippydata.org
-- Package guides for agents: see [AGENTS.md](AGENTS.md) + runtime-specific files in `python/`, `nodejs/`, `crates/zippy_core/`, and `cli/`
+- Package guides for agents: see [AGENTS.md](AGENTS.md) + runtime-specific files in `python/`, `nodejs/`, `crates/zippy_data/`, and `cli/`
 ```
 
 ## API Reference

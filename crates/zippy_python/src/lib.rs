@@ -9,7 +9,7 @@ use pyo3::{
     prelude::*,
     types::{PyDict, PyList, PyTuple},
 };
-use zippy_core::FastStore;
+use zippy_data::FastStore;
 
 /// Convert serde_json::Value to Python object
 fn json_to_py(py: Python<'_>, value: &serde_json::Value) -> PyResult<PyObject> {
@@ -365,12 +365,12 @@ impl ScanIterator {
 /// Get the ZDS version.
 #[pyfunction]
 fn version() -> &'static str {
-    zippy_core::ZDS_VERSION
+    zippy_data::ZDS_VERSION
 }
 
 /// Python module definition.
 #[pymodule]
-fn _zippy_core(m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn _zippy_data(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<NativeStore>()?;
     m.add_class::<ScanIterator>()?;
     m.add_function(wrap_pyfunction!(version, m)?)?;

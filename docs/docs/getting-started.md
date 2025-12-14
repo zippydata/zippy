@@ -59,7 +59,7 @@ npm install @zippydata/core
 ```toml
 # Cargo.toml
 [dependencies]
-zippy_core = "0.1"
+zippy_data = "0.1"
 ```
 
 ### CLI

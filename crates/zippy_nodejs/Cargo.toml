@@ -10,7 +10,7 @@ description = "Node.js bindings for ZDS (Zippy Data System)"
 crate-type = ["cdylib"]
 
 [dependencies]
-zippy_core.workspace = true
+zippy_data.workspace = true
 napi = { version = "2", features = ["napi4", "serde-json"] }
 napi-derive = "2"
 serde_json.workspace = true
