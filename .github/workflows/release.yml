@@ -175,9 +175,15 @@ jobs:
       
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Authenticate with crates.io (OIDC)
+        id: crates-token
+        uses: rust-lang/crates-io-auth-action@v1
       
       - name: Publish zippy_data
         run: cargo publish -p zippy_data --allow-dirty
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.crates-token.outputs.token }}
         continue-on-error: true  # May fail if already published
 
   # Create GitHub Release
