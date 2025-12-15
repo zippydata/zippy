@@ -76,14 +76,36 @@ Everything you need to build with ZDS—from quick starts to deep dives.
 
 A **store** is a directory (or ZIP archive) containing one or more **collections**. Each collection holds documents.
 
+```python
+from zippy import ZDSStore, ZDataset
+
+# Single collection (classic helper)
+store = ZDSStore.open("./my_dataset", collection="train")
+store.put("doc_001", {"text": "Hello world", "label": 1})
+store.put("doc_002", {"text": "Goodbye", "label": 0, "extra": [1, 2, 3]})
+
+# Multi-collection: omit the collection argument for a root-capable handle
+store = ZDSStore.open("./my_dataset", native=True)
+train = store.collection("train")
+test = store.collection("test")
+
+# Iterate like HuggingFace
+dataset = ZDataset(train)
+for doc in dataset.shuffle(seed=42):
+    print(doc["text"])
+
+print(store.list_collections())  # ['test', 'train']
+
+# Advanced: inspect lock/mode state via the exposed root
+native_root = store.root  # NativeRoot / ZDSRoot
+# ⚠️ Closing the root tears down every reader/writer for this path.
+# Do this only during shutdown/cleanup.
+native_root.close()
 ```
-my_dataset/                    # Store
-└── collections/
-    ├── train/                 # Collection
-    │   └── meta/data.jsonl   # Documents
-    └── test/                  # Collection
-        └── meta/data.jsonl   # Documents
-```
+
+> 💡 `ZDSRoot` now lives under `store.root`. Only reach for it when you need explicit read/write modes, manual locking, or to share the memoized root with another runtime.
+>
+> ⚠️ Closing the root invalidates every handle into that store. Call it once you're done writing/reading, never mid-workload.
 
 ### Documents
 
@@ -108,8 +130,6 @@ Schema is per-document—each document can have different fields.
 ZDS uses a binary index (`index.bin`) for O(1) lookups by document ID. The index is optional—without it, operations fall back to sequential scan.
 
 ## API Overview
-
-All language bindings share the same core operations:
 
 | Operation | Python | Node.js | Rust | CLI |
 |-----------|--------|---------|------|-----|

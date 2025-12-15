@@ -46,6 +46,12 @@ pub enum Error {
 
     #[error("Codec error: {0}")]
     Codec(String),
+
+    #[error("Write lock error: {0}")]
+    WriteLock(String),
+
+    #[error("Read-only mode: {0}")]
+    ReadOnly(String),
 }
 
 impl Error {

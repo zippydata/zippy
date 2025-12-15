@@ -8,19 +8,42 @@
 //! - mmap + parallel SIMD JSON parsing
 
 use std::{
+    collections::HashMap,
     fs::{File, OpenOptions},
     io::{BufRead, BufReader, BufWriter, Read, Seek, SeekFrom, Write},
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, Weak},
 };
 
 use memchr::memchr_iter;
 use memmap2::Mmap;
+use once_cell::sync::Lazy;
+use parking_lot::RwLock;
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 use serde_json::Value;
 
-use crate::{Error, Layout, Result};
+use crate::{lock::WriteLock, Error, Layout, Result};
+
+/// Open mode for ZDS stores.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum OpenMode {
+    /// Read-only mode - no writes allowed, no lock acquired.
+    Read,
+    /// Read-write mode - writes allowed, exclusive lock acquired.
+    ReadWrite,
+}
+
+impl Default for OpenMode {
+    fn default() -> Self {
+        OpenMode::ReadWrite
+    }
+}
+
+/// Global cache of open ZDSRoot instances by (canonical_path, mode).
+/// Uses weak references so roots are cleaned up when all handles are dropped.
+static ROOT_CACHE: Lazy<RwLock<HashMap<(PathBuf, OpenMode), Weak<ZDSRootInner>>>> =
+    Lazy::new(|| RwLock::new(HashMap::new()));
 
 /// Entry in the in-memory index (16 bytes, aligned).
 #[derive(Debug, Clone, Copy)]
@@ -50,21 +73,35 @@ pub struct FastStore {
     batch_size: usize,
     /// Memory-mapped view for fast reads (lazily initialized)
     mmap: Option<Arc<Mmap>>,
+    /// Open mode (read-only or read-write)
+    mode: OpenMode,
 }
 
 impl FastStore {
-    /// Open or create a fast store.
+    /// Open or create a fast store in read-write mode.
     pub fn open(
         root: impl AsRef<Path>,
         collection: impl AsRef<str>,
         batch_size: usize,
     ) -> Result<Self> {
+        Self::open_with_mode(root, collection, batch_size, OpenMode::ReadWrite)
+    }
+
+    /// Open a fast store with explicit mode.
+    pub fn open_with_mode(
+        root: impl AsRef<Path>,
+        collection: impl AsRef<str>,
+        batch_size: usize,
+        mode: OpenMode,
+    ) -> Result<Self> {
         let root = root.as_ref().to_path_buf();
         let collection = collection.as_ref().to_string();
 
-        // Create directory structure
+        // Create directory structure (only in ReadWrite mode)
         let meta_dir = Layout::meta_dir(&root, &collection);
-        std::fs::create_dir_all(&meta_dir)?;
+        if mode == OpenMode::ReadWrite {
+            std::fs::create_dir_all(&meta_dir)?;
+        }
 
         let data_file = meta_dir.join("data.jsonl");
         let index_file = meta_dir.join("index.bin");
@@ -89,12 +126,16 @@ impl FastStore {
             0
         };
 
-        // Open writer in append mode with larger buffer
-        let file = OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(&data_file)?;
-        let writer = BufWriter::with_capacity(256 * 1024, file); // 256KB buffer
+        // Open writer in append mode with larger buffer (only in ReadWrite mode)
+        let writer = if mode == OpenMode::ReadWrite {
+            let file = OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(&data_file)?;
+            Some(BufWriter::with_capacity(256 * 1024, file)) // 256KB buffer
+        } else {
+            None
+        };
 
         // Create mmap if data file exists and has content
         let mmap = if data_file.exists() && current_offset > 0 {
@@ -111,12 +152,23 @@ impl FastStore {
             data_file,
             index_file,
             index,
-            writer: Some(writer),
+            writer,
             current_offset,
             pending_count: 0,
             batch_size,
             mmap,
+            mode,
         })
+    }
+
+    /// Get the open mode.
+    pub fn mode(&self) -> OpenMode {
+        self.mode
+    }
+
+    /// Check if this store is writable.
+    pub fn is_writable(&self) -> bool {
+        self.mode == OpenMode::ReadWrite
     }
 
     /// Refresh mmap after writes (call after flush for read consistency)
@@ -310,6 +362,9 @@ impl FastStore {
 
     /// Put a document.
     pub fn put(&mut self, doc_id: impl Into<String>, doc: Value) -> Result<()> {
+        if self.mode == OpenMode::Read {
+            return Err(Error::ReadOnly("cannot put in read-only mode".to_string()));
+        }
         let doc_id = doc_id.into();
         Layout::validate_doc_id(&doc_id)?;
 
@@ -331,6 +386,9 @@ impl FastStore {
     /// Put a document as raw JSON bytes (fastest path).
     /// The line should be valid JSON with "_id" field already included.
     pub fn put_raw_line(&mut self, doc_id: impl Into<String>, line_bytes: &[u8]) -> Result<()> {
+        if self.mode == OpenMode::Read {
+            return Err(Error::ReadOnly("cannot put in read-only mode".to_string()));
+        }
         let doc_id = doc_id.into();
         let length = line_bytes.len() as u32 + 1; // +1 for newline
 
@@ -363,6 +421,9 @@ impl FastStore {
     /// Write a complete JSONL blob with doc_ids (fastest bulk path).
     /// Uses SIMD newline search and single write for maximum throughput.
     pub fn write_jsonl_blob(&mut self, jsonl_data: &[u8], doc_ids: &[String]) -> Result<usize> {
+        if self.mode == OpenMode::Read {
+            return Err(Error::ReadOnly("cannot write in read-only mode".to_string()));
+        }
         let writer = self.writer.as_mut().ok_or_else(|| {
             Error::Io(std::io::Error::new(
                 std::io::ErrorKind::NotConnected,
@@ -710,5 +771,470 @@ impl FastStore {
 impl Drop for FastStore {
     fn drop(&mut self) {
         let _ = self.flush();
+    }
+}
+
+/// Inner state for ZDSRoot, shared via Arc.
+struct ZDSRootInner {
+    root: PathBuf,
+    batch_size: usize,
+    mode: OpenMode,
+    /// Write lock (only held in ReadWrite mode)
+    write_lock: Option<WriteLock>,
+}
+
+impl std::fmt::Debug for ZDSRootInner {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ZDSRootInner")
+            .field("root", &self.root)
+            .field("batch_size", &self.batch_size)
+            .field("mode", &self.mode)
+            .field("write_lock", &self.write_lock.is_some())
+            .finish()
+    }
+}
+
+/// Root handle for a ZDS store directory.
+///
+/// This struct represents a ZDS root directory without binding to a specific collection.
+/// It allows opening multiple collections from the same root safely, avoiding corruption
+/// when writing to multiple collections simultaneously.
+///
+/// Roots are **memoized** by (path, mode): opening the same path twice returns the same
+/// shared instance, ensuring a single write lock protects the entire store.
+///
+/// # Example
+///
+/// ```ignore
+/// use zippy_data::{ZDSRoot, OpenMode};
+///
+/// // Open in read-write mode (default)
+/// let root = ZDSRoot::open("./data", 1000, OpenMode::ReadWrite)?;
+/// let train = root.collection("train")?;
+/// let test = root.collection("test")?;
+///
+/// train.put("doc1", json!({"split": "train"}))?;
+/// test.put("doc1", json!({"split": "test"}))?;
+///
+/// // Open read-only (no lock, parallel readers allowed)
+/// let reader = ZDSRoot::open("./data", 1000, OpenMode::Read)?;
+/// ```
+#[derive(Clone)]
+pub struct ZDSRoot {
+    inner: Arc<ZDSRootInner>,
+}
+
+impl std::fmt::Debug for ZDSRoot {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ZDSRoot")
+            .field("root", &self.inner.root)
+            .field("batch_size", &self.inner.batch_size)
+            .field("mode", &self.inner.mode)
+            .finish()
+    }
+}
+
+impl ZDSRoot {
+    /// Open or create a ZDS root directory.
+    ///
+    /// This initializes the root directory structure but does not open any collection.
+    /// Use `collection()` to get a handle to a specific collection.
+    ///
+    /// # Memoization
+    ///
+    /// Roots are cached by (canonical_path, mode). Opening the same path multiple times
+    /// returns the same shared instance, ensuring consistent locking.
+    ///
+    /// # Locking
+    ///
+    /// - `OpenMode::ReadWrite`: Acquires an exclusive write lock. Only one writer allowed.
+    /// - `OpenMode::Read`: No lock acquired. Multiple readers allowed.
+    pub fn open(root: impl AsRef<Path>, batch_size: usize, mode: OpenMode) -> Result<Self> {
+        let root_path = root.as_ref();
+
+        // Initialize root directory structure first (needed for canonicalize)
+        if mode == OpenMode::ReadWrite {
+            Layout::init_root(root_path)?;
+        }
+
+        // Canonicalize path for consistent caching (after directory exists)
+        let canonical = std::fs::canonicalize(root_path).unwrap_or_else(|_| root_path.to_path_buf());
+        let cache_key = (canonical.clone(), mode);
+
+        // Check cache first
+        {
+            let cache = ROOT_CACHE.read();
+            if let Some(weak) = cache.get(&cache_key) {
+                if let Some(inner) = weak.upgrade() {
+                    return Ok(ZDSRoot { inner });
+                }
+            }
+        }
+
+        // Not in cache or expired - create new
+        let mut cache = ROOT_CACHE.write();
+
+        // Double-check after acquiring write lock
+        if let Some(weak) = cache.get(&cache_key) {
+            if let Some(inner) = weak.upgrade() {
+                return Ok(ZDSRoot { inner });
+            }
+        }
+
+        // Acquire write lock if in ReadWrite mode
+        let write_lock = if mode == OpenMode::ReadWrite {
+            Some(WriteLock::acquire(root_path)?)
+        } else {
+            None
+        };
+
+        let inner = Arc::new(ZDSRootInner {
+            root: root_path.to_path_buf(),
+            batch_size,
+            mode,
+            write_lock,
+        });
+
+        // Store weak reference in cache
+        cache.insert(cache_key, Arc::downgrade(&inner));
+
+        Ok(ZDSRoot { inner })
+    }
+
+    /// Open in read-write mode (convenience method).
+    pub fn open_rw(root: impl AsRef<Path>, batch_size: usize) -> Result<Self> {
+        Self::open(root, batch_size, OpenMode::ReadWrite)
+    }
+
+    /// Open in read-only mode (convenience method).
+    pub fn open_readonly(root: impl AsRef<Path>, batch_size: usize) -> Result<Self> {
+        Self::open(root, batch_size, OpenMode::Read)
+    }
+
+    /// Get the root path.
+    pub fn root_path(&self) -> &Path {
+        &self.inner.root
+    }
+
+    /// Get the default batch size.
+    pub fn batch_size(&self) -> usize {
+        self.inner.batch_size
+    }
+
+    /// Get the open mode.
+    pub fn mode(&self) -> OpenMode {
+        self.inner.mode
+    }
+
+    /// Check if this root is writable.
+    pub fn is_writable(&self) -> bool {
+        self.inner.mode == OpenMode::ReadWrite
+    }
+
+    /// Open a collection within this ZDS root.
+    ///
+    /// Creates the collection if it doesn't exist (in ReadWrite mode).
+    /// Returns an error if attempting to create in Read mode.
+    pub fn collection(&self, name: impl AsRef<str>) -> Result<FastStore> {
+        self.collection_with_batch_size(name, self.inner.batch_size)
+    }
+
+    /// Open a collection with a custom batch size.
+    pub fn collection_with_batch_size(
+        &self,
+        name: impl AsRef<str>,
+        batch_size: usize,
+    ) -> Result<FastStore> {
+        let name = name.as_ref();
+
+        // Check if collection exists
+        let exists = self.collection_exists(name);
+
+        // In read mode, collection must exist
+        if self.inner.mode == OpenMode::Read && !exists {
+            return Err(Error::CollectionNotFound(name.to_string()));
+        }
+
+        FastStore::open_with_mode(&self.inner.root, name, batch_size, self.inner.mode)
+    }
+
+    /// List all collections in this ZDS root.
+    pub fn list_collections(&self) -> Result<Vec<String>> {
+        let collections_dir = Layout::collections_dir(&self.inner.root);
+        if !collections_dir.exists() {
+            return Ok(Vec::new());
+        }
+
+        let mut collections = Vec::new();
+        for entry in std::fs::read_dir(collections_dir)? {
+            let entry = entry?;
+            if entry.file_type()?.is_dir() {
+                if let Some(name) = entry.file_name().to_str() {
+                    collections.push(name.to_string());
+                }
+            }
+        }
+        collections.sort();
+        Ok(collections)
+    }
+
+    /// Check if a collection exists.
+    pub fn collection_exists(&self, name: &str) -> bool {
+        Layout::collection_dir(&self.inner.root, name).exists()
+    }
+
+    /// Close the root explicitly, releasing any locks.
+    ///
+    /// This removes the root from the cache and drops the write lock if held.
+    /// After calling this, the root handle is still valid but will need to
+    /// reacquire the lock if opened again.
+    pub fn close(&self) {
+        let canonical = std::fs::canonicalize(&self.inner.root)
+            .unwrap_or_else(|_| self.inner.root.clone());
+        let cache_key = (canonical, self.inner.mode);
+
+        let mut cache = ROOT_CACHE.write();
+        cache.remove(&cache_key);
+        // The write lock will be released when the last Arc reference is dropped
+    }
+
+    /// Clear all cached roots (useful for testing).
+    #[doc(hidden)]
+    pub fn clear_cache() {
+        let mut cache = ROOT_CACHE.write();
+        cache.clear();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+    use tempfile::TempDir;
+
+    #[test]
+    fn test_fast_store_basic() {
+        let tmp = TempDir::new().unwrap();
+        let mut store = FastStore::open(tmp.path(), "test", 100).unwrap();
+
+        store.put("doc1", json!({"name": "alice"})).unwrap();
+        store.flush().unwrap();
+
+        let doc = store.get("doc1").unwrap();
+        assert_eq!(doc["name"], "alice");
+        assert_eq!(store.len(), 1);
+    }
+
+    #[test]
+    fn test_zds_root_basic() {
+        ZDSRoot::clear_cache();
+        let tmp = TempDir::new().unwrap();
+        let root = ZDSRoot::open_rw(tmp.path(), 100).unwrap();
+
+        // Initially no collections
+        assert!(root.list_collections().unwrap().is_empty());
+        assert!(!root.collection_exists("train"));
+
+        // Create collection via collection()
+        let mut train = root.collection("train").unwrap();
+        train.put("doc1", json!({"split": "train"})).unwrap();
+        train.flush().unwrap();
+
+        // Collection should now exist
+        assert!(root.collection_exists("train"));
+        assert_eq!(root.list_collections().unwrap(), vec!["train"]);
+    }
+
+    #[test]
+    fn test_zds_root_multiple_collections() {
+        ZDSRoot::clear_cache();
+        let tmp = TempDir::new().unwrap();
+        let root = ZDSRoot::open_rw(tmp.path(), 100).unwrap();
+
+        // Create multiple collections from the same root
+        let mut train = root.collection("train").unwrap();
+        let mut test = root.collection("test").unwrap();
+        let mut valid = root.collection("validation").unwrap();
+
+        train.put("doc1", json!({"split": "train", "data": 1})).unwrap();
+        test.put("doc1", json!({"split": "test", "data": 2})).unwrap();
+        valid.put("doc1", json!({"split": "validation", "data": 3})).unwrap();
+
+        train.flush().unwrap();
+        test.flush().unwrap();
+        valid.flush().unwrap();
+
+        // Verify each collection has its own data
+        assert_eq!(train.len(), 1);
+        assert_eq!(test.len(), 1);
+        assert_eq!(valid.len(), 1);
+
+        let train_doc = train.get("doc1").unwrap();
+        let test_doc = test.get("doc1").unwrap();
+        let valid_doc = valid.get("doc1").unwrap();
+
+        assert_eq!(train_doc["split"], "train");
+        assert_eq!(test_doc["split"], "test");
+        assert_eq!(valid_doc["split"], "validation");
+
+        // List collections should show all three
+        let collections = root.list_collections().unwrap();
+        assert_eq!(collections.len(), 3);
+        assert!(collections.contains(&"train".to_string()));
+        assert!(collections.contains(&"test".to_string()));
+        assert!(collections.contains(&"validation".to_string()));
+    }
+
+    #[test]
+    fn test_zds_root_collection_isolation() {
+        ZDSRoot::clear_cache();
+        let tmp = TempDir::new().unwrap();
+        let root = ZDSRoot::open_rw(tmp.path(), 100).unwrap();
+
+        // Write same doc ID to different collections
+        let mut train = root.collection("train").unwrap();
+        let mut test = root.collection("test").unwrap();
+
+        train.put("doc_001", json!({"value": 100})).unwrap();
+        test.put("doc_001", json!({"value": 200})).unwrap();
+
+        train.flush().unwrap();
+        test.flush().unwrap();
+
+        // Each collection should have independent data
+        assert_eq!(train.get("doc_001").unwrap()["value"], 100);
+        assert_eq!(test.get("doc_001").unwrap()["value"], 200);
+    }
+
+    #[test]
+    fn test_zds_root_custom_batch_size() {
+        ZDSRoot::clear_cache();
+        let tmp = TempDir::new().unwrap();
+        let root = ZDSRoot::open_rw(tmp.path(), 1000).unwrap();
+
+        assert_eq!(root.batch_size(), 1000);
+
+        // Open collection with custom batch size
+        let mut store = root.collection_with_batch_size("custom", 500).unwrap();
+        store.put("doc1", json!({"test": true})).unwrap();
+        store.flush().unwrap();
+
+        assert!(root.collection_exists("custom"));
+    }
+
+    #[test]
+    fn test_zds_root_reopen() {
+        ZDSRoot::clear_cache();
+        let tmp = TempDir::new().unwrap();
+
+        // Create root and write data
+        {
+            let root = ZDSRoot::open_rw(tmp.path(), 100).unwrap();
+            let mut train = root.collection("train").unwrap();
+            train.put("doc1", json!({"persisted": true})).unwrap();
+            train.flush().unwrap();
+        }
+
+        // Reopen and verify data persists
+        ZDSRoot::clear_cache();
+        {
+            let root = ZDSRoot::open_rw(tmp.path(), 100).unwrap();
+            assert!(root.collection_exists("train"));
+
+            let train = root.collection("train").unwrap();
+            let doc = train.get("doc1").unwrap();
+            assert_eq!(doc["persisted"], true);
+        }
+    }
+
+    #[test]
+    fn test_zds_root_read_only() {
+        ZDSRoot::clear_cache();
+        let tmp = TempDir::new().unwrap();
+
+        // Create some data first
+        {
+            let root = ZDSRoot::open_rw(tmp.path(), 100).unwrap();
+            let mut train = root.collection("train").unwrap();
+            train.put("doc1", json!({"value": 42})).unwrap();
+            train.flush().unwrap();
+        }
+
+        // Clear cache and open read-only
+        ZDSRoot::clear_cache();
+        {
+            let root = ZDSRoot::open_readonly(tmp.path(), 100).unwrap();
+            assert!(!root.is_writable());
+            assert_eq!(root.mode(), OpenMode::Read);
+
+            // Can read existing collection
+            let train = root.collection("train").unwrap();
+            assert_eq!(train.get("doc1").unwrap()["value"], 42);
+
+            // Cannot open non-existent collection in read mode
+            let result = root.collection("nonexistent");
+            assert!(result.is_err());
+        }
+    }
+
+    #[test]
+    fn test_zds_root_read_only_write_fails() {
+        ZDSRoot::clear_cache();
+        let tmp = TempDir::new().unwrap();
+
+        // Create some data first
+        {
+            let root = ZDSRoot::open_rw(tmp.path(), 100).unwrap();
+            let mut train = root.collection("train").unwrap();
+            train.put("doc1", json!({"value": 42})).unwrap();
+            train.flush().unwrap();
+        }
+
+        // Clear cache and open read-only
+        ZDSRoot::clear_cache();
+        {
+            let root = ZDSRoot::open_readonly(tmp.path(), 100).unwrap();
+            let mut train = root.collection("train").unwrap();
+
+            // Writing should fail
+            let result = train.put("doc2", json!({"value": 100}));
+            assert!(result.is_err());
+            if let Err(Error::ReadOnly(_)) = result {
+                // Expected
+            } else {
+                panic!("Expected ReadOnly error");
+            }
+        }
+    }
+
+    #[test]
+    fn test_zds_root_memoization() {
+        ZDSRoot::clear_cache();
+        let tmp = TempDir::new().unwrap();
+
+        // Open same path twice - should return same instance
+        let root1 = ZDSRoot::open_rw(tmp.path(), 100).unwrap();
+        let root2 = ZDSRoot::open_rw(tmp.path(), 100).unwrap();
+
+        // Both should point to same underlying data (via Arc)
+        assert!(Arc::ptr_eq(&root1.inner, &root2.inner));
+    }
+
+    #[test]
+    fn test_zds_root_close() {
+        ZDSRoot::clear_cache();
+        let tmp = TempDir::new().unwrap();
+
+        // Open and close - must drop root to release lock
+        {
+            let root = ZDSRoot::open_rw(tmp.path(), 100).unwrap();
+            root.close();
+            // root is dropped here, releasing the lock
+        }
+
+        // After close + drop, can reopen
+        ZDSRoot::clear_cache();
+        let root2 = ZDSRoot::open_rw(tmp.path(), 100).unwrap();
+        assert!(root2.list_collections().unwrap().is_empty());
     }
 }

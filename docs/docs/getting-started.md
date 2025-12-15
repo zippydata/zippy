@@ -82,9 +82,9 @@ sudo mv zippy /usr/local/bin/
 ### Python
 
 ```python
-from zippy import ZDSStore, ZDataset
+from zippy import ZDSStore
 
-# Create a new store
+# Single collection (classic helper)
 store = ZDSStore.open("./my_first_dataset", collection="examples")
 
 # Add some documents
@@ -96,7 +96,7 @@ store.put("greeting_001", {
 
 store.put("greeting_002", {
     "text": "Bonjour le monde!",
-    "language": "fr", 
+    "language": "fr",
     "sentiment": "positive"
 })
 
@@ -104,10 +104,26 @@ store.put("greeting_003", {
     "text": "Hola mundo!",
     "language": "es",
     "sentiment": "positive",
-    "extra_field": ["this", "is", "flexible"]  # Different schema!
+    "extra_field": ["this", "is", "flexible"]
 })
 
 print(f"Created {len(store)} documents")
+
+# Multi-collection: omit the collection argument
+store = ZDSStore.open("./my_first_dataset", native=True)
+examples = store.collection("examples")
+holdout = store.collection("holdout")
+
+examples.put("greeting_004", {"text": "Ciao mondo!", "language": "it"})
+holdout.put("greeting_eval", {"text": "Hallo Welt!", "language": "de"})
+
+print(store.list_collections())  # ['examples', 'holdout']
+
+# Advanced: access the underlying root (for locking/mode visibility)
+native_root = store.root
+# ⚠️ Closing the root invalidates every handle into this path.
+# Only do this during shutdown/cleanup.
+native_root.close()
 
 # Retrieve by ID
 doc = store.get("greeting_001")
@@ -123,10 +139,9 @@ for doc in store.scan():
 ```javascript
 const { ZdsStore } = require('@zippydata/core');
 
-// Create a new store
-const store = ZdsStore.open('./my_first_dataset', 'examples');
+// Single collection (classic helper)
+const store = ZdsStore.open('./my_first_dataset', { collection: 'examples' });
 
-// Add documents
 store.put('greeting_001', {
     text: 'Hello, world!',
     language: 'en',
@@ -140,6 +155,21 @@ store.put('greeting_002', {
 });
 
 console.log(`Created ${store.count} documents`);
+
+// Multi-collection
+const multi = ZdsStore.open('./my_first_dataset');
+const examples = multi.collection('examples');
+const holdout = multi.collection('holdout');
+
+examples.put('greeting_003', { text: 'Hola mundo!', language: 'es' });
+holdout.put('greeting_eval', { text: 'Hallo Welt!', language: 'de' });
+
+console.log(multi.listCollections());  // ['examples', 'holdout']
+
+// Advanced: inspect lock/mode via the exposed root
+const nativeRoot = multi.root;
+// ⚠️ Closing the root invalidates every handle for this path. Shutdown only.
+nativeRoot.close();
 
 // Retrieve by ID
 const doc = store.get('greeting_001');

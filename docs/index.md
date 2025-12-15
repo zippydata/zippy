@@ -97,9 +97,9 @@ pip install zippy-data
 ```
 
 ```python
-from zippy import ZDSStore, ZDataset
+from zippy import ZDSStore, ZDSRoot, ZDataset
 
-# Create a store
+# Legacy helper: single-collection store (still supported)
 store = ZDSStore.open("./my_dataset", collection="train")
 
 # Add documents
@@ -109,10 +109,17 @@ store.put("doc_002", {"text": "Goodbye", "label": 0, "extra": [1, 2, 3]})
 # Random access
 print(store["doc_001"])  # {"text": "Hello world", "label": 1}
 
+# Preferred: open a root once, then grab multiple collections
+root = ZDSRoot.open("./my_dataset", native=True)
+train = root.collection("train")
+test = root.collection("test")
+
 # Iterate like HuggingFace
-dataset = ZDataset(store)
+dataset = ZDataset(train)
 for doc in dataset.shuffle(seed=42):
     print(doc["text"])
+
+print(root.list_collections())  # ['test', 'train']
 ```
 
 ### Node.js

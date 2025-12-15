@@ -72,16 +72,30 @@ store.close();
 ```javascript
 const { ZdsStore } = require('@zippydata/core');
 
-// Basic usage
-const store = ZdsStore.open('./my_data', 'train');
+// Single collection (classic helper)
+const store = ZdsStore.open('./my_data', { collection: 'train' });
+store.put('doc_001', { text: 'hello' });
 
-// With custom batch size (controls auto-flush frequency)
-const store = ZdsStore.open('./my_data', 'train', 500);
+// Multi-collection: omit collection to get a root-capable handle
+const store = ZdsStore.open('./my_data', { native: true });
+const train = store.collection('train');
+const evalSet = store.collection('evaluation');
 
-// Store info
-console.log(store.info);
-// { root: './my_data', collection: 'train', count: 1000 }
+train.put('doc_train', { text: 'Train sample' });
+evalSet.put('doc_eval', { text: 'Eval sample' });
+
+console.log(store.listCollections()); // ['evaluation', 'train']
+
+// Need low-level control (lock state, mode)? Grab the underlying root
+const nativeRoot = store.root; // exposes ZdsRoot / NativeRoot
+// ⚠️ Closing the root tears down every reader/writer for this path.
+// Only call this during shutdown/cleanup.
+nativeRoot.close();
 ```
+
+> 💡 Most Node.js apps can stick to `ZdsStore.open(...)`. Reach for `store.root`
+> only when you need explicit read/write modes, manual locking, or to share the
+> memoized root with another runtime.
 
 ### Adding Documents
 

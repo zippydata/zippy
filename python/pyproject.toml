@@ -42,7 +42,7 @@ Repository = "https://github.com/zippydata/zippy"
 Documentation = "https://zippydata.org/docs"
 
 [tool.maturin]
-module-name = "zippy._core"
+module-name = "zippy._zippy_data"
 python-packages = ["zippy"]
 features = ["pyo3/extension-module"]
 manifest-path = "../crates/zippy_python/Cargo.toml"

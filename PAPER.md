@@ -795,7 +795,69 @@ const raw = store.readJsonlBlob();            // Zero-copy bulk read
 store.close();
 ```
 
-### 6.3 DuckDB Integration
+### 6.3 Multi-Collection Management with `ZDSStore`
+
+Most workflows can safely write to multiple collections by opening a store without specifying a collection—this returns a root-capable handle that shares the memoized lock across every collection.
+
+**Python:**
+```python
+from zippy import ZDSStore
+
+# Root-capable handle (native backend when available)
+store = ZDSStore.open("./ml_data", native=True)
+
+train = store.collection("train")
+test = store.collection("test")
+validation = store.collection("validation")
+
+train.put("doc_001", {"split": "train", "features": [1.0, 2.0]})
+test.put("doc_001", {"split": "test", "features": [1.5, 2.5]})
+validation.put("doc_001", {"split": "val", "features": [1.2, 2.2]})
+
+print(store.list_collections())  # ['test', 'train', 'validation']
+
+# Advanced: access the shared root for lock/mode introspection
+native_root = store.root  # exposes `ZDSRoot`
+# ⚠️ Closing the root invalidates every handle for this path—shutdown only.
+native_root.close()
+```
+
+**Node.js:**
+```javascript
+const { ZdsStore } = require('@zippydata/core');
+
+const store = ZdsStore.open('./ml_data');
+const train = store.collection('train');
+const test = store.collection('test');
+
+train.put('doc_001', { split: 'train' });
+test.put('doc_001', { split: 'test' });
+
+console.log(store.listCollections());  // ['test', 'train']
+
+const nativeRoot = store.root; // `ZdsRoot` for advanced control
+// ⚠️ Closing the root tears down every reader/writer—only do this at exit.
+nativeRoot.close();
+```
+
+**Rust:**
+```rust
+use zippy_data::ZDSRoot;
+
+// Rust still exposes ZDSRoot directly for multi-collection management.
+let root = ZDSRoot::open("./ml_data", 1000, zippy_data::OpenMode::ReadWrite)?;
+let mut train = root.collection("train")?;
+let mut test = root.collection("test")?;
+
+train.put("doc_001", json!({"split": "train"}))?;
+test.put("doc_001", json!({"split": "test"}))?;
+
+println!("{:?}", root.list_collections()?);
+```
+
+> ℹ️ `ZDSRoot`/`ZdsRoot` are still available (and are what power `store.root` under the hood), but typical applications can stick to `ZDSStore.open()` / `ZdsStore.open()` for both single- and multi-collection flows.
+
+### 6.4 DuckDB Integration
 
 ZDS integrates with DuckDB for SQL-based analysis:
 
@@ -820,7 +882,7 @@ FROM read_zds('./data', 'train') t
 JOIN read_zds('./data', 'eval') e ON t.id = e.train_id;
 ```
 
-### 6.4 Command-Line Power with jq and Friends
+### 6.5 Command-Line Power with jq and Friends
 
 One of ZDS's greatest strengths is seamless integration with Unix text-processing tools. Since documents are stored as JSONL, the entire ecosystem of JSON command-line tools becomes available.
 
@@ -893,7 +955,7 @@ $ cat data.jsonl | jq -s '[.[].score] | {min: min, max: max, avg: (add/length)}'
 
 This composability is intentional: ZDS is designed to be a **good citizen** in the Unix ecosystem, not a walled garden.
 
-### 6.5 Cross-Platform Data Flow
+### 6.6 Cross-Platform Data Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐

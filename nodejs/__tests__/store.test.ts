@@ -4,7 +4,7 @@
  * Comprehensive tests for the ZdsStore class.
  */
 
-import { ZdsStore, BulkWriter, version } from '../index';
+import { ZdsStore, ZdsRoot, BulkWriter, version } from '../index';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -361,5 +361,208 @@ describe('Persistence', () => {
         const store3 = ZdsStore.open(testDir, 'test');
         expect(store3.count).toBe(3);
         store3.close();
+    });
+});
+
+describe('ZdsRoot', () => {
+    let testDir: string;
+    
+    beforeEach(() => {
+        testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'zds-root-test-'));
+    });
+    
+    afterEach(() => {
+        fs.rmSync(testDir, { recursive: true, force: true });
+    });
+    
+    describe('open', () => {
+        it('should create a new root', () => {
+            const root = ZdsRoot.open(testDir);
+            expect(root.rootPath).toBe(testDir);
+            expect(root.listCollections()).toEqual([]);
+        });
+        
+        it('should accept custom batch size', () => {
+            const root = ZdsRoot.open(testDir, 10000);
+            expect(root.batchSize).toBe(10000);
+        });
+    });
+    
+    describe('collection', () => {
+        it('should create and return a collection handle', () => {
+            const root = ZdsRoot.open(testDir);
+            const train = root.collection('train');
+            
+            train.put('doc1', { value: 1 });
+            train.flush();
+            
+            expect(train.count).toBe(1);
+            expect(root.collectionExists('train')).toBe(true);
+        });
+        
+        it('should support custom batch size per collection', () => {
+            const root = ZdsRoot.open(testDir);
+            const train = root.collection('train', 500);
+            
+            train.put('doc1', { value: 1 });
+            train.flush();
+            
+            expect(train.count).toBe(1);
+        });
+    });
+    
+    describe('multiple collections', () => {
+        it('should manage multiple collections from same root', () => {
+            const root = ZdsRoot.open(testDir);
+            
+            const train = root.collection('train');
+            const test = root.collection('test');
+            const valid = root.collection('validation');
+            
+            train.put('doc1', { split: 'train', value: 1 });
+            test.put('doc1', { split: 'test', value: 2 });
+            valid.put('doc1', { split: 'validation', value: 3 });
+            
+            train.flush();
+            test.flush();
+            valid.flush();
+            
+            // Verify each collection has its own data
+            expect(train.get('doc1')).toEqual({ split: 'train', value: 1 });
+            expect(test.get('doc1')).toEqual({ split: 'test', value: 2 });
+            expect(valid.get('doc1')).toEqual({ split: 'validation', value: 3 });
+            
+            // List collections
+            const collections = root.listCollections();
+            expect(collections).toContain('train');
+            expect(collections).toContain('test');
+            expect(collections).toContain('validation');
+            expect(collections.length).toBe(3);
+        });
+        
+        it('should isolate collections from each other', () => {
+            const root = ZdsRoot.open(testDir);
+            
+            const train = root.collection('train');
+            const test = root.collection('test');
+            
+            // Write same doc ID to different collections
+            train.put('doc_001', { value: 100 });
+            test.put('doc_001', { value: 200 });
+            
+            train.flush();
+            test.flush();
+            
+            // Each collection should have independent data
+            expect(train.get('doc_001')).toEqual({ value: 100 });
+            expect(test.get('doc_001')).toEqual({ value: 200 });
+        });
+        
+        it('should not leak documents between collections', () => {
+            const root = ZdsRoot.open(testDir);
+            
+            const train = root.collection('train');
+            const test = root.collection('test');
+            
+            train.put('train_only', { exists_in: 'train' });
+            test.put('test_only', { exists_in: 'test' });
+            
+            train.flush();
+            test.flush();
+            
+            // Verify docs don't exist in wrong collection
+            expect(() => train.get('test_only')).toThrow();
+            expect(() => test.get('train_only')).toThrow();
+        });
+    });
+    
+    describe('collectionExists', () => {
+        it('should return false for non-existent collection', () => {
+            const root = ZdsRoot.open(testDir);
+            expect(root.collectionExists('nonexistent')).toBe(false);
+        });
+        
+        it('should return true after creating collection', () => {
+            const root = ZdsRoot.open(testDir);
+            
+            expect(root.collectionExists('train')).toBe(false);
+            
+            const train = root.collection('train');
+            train.put('doc1', { test: true });
+            train.flush();
+            
+            expect(root.collectionExists('train')).toBe(true);
+        });
+    });
+    
+    describe('info', () => {
+        it('should return root info', () => {
+            const root = ZdsRoot.open(testDir, 5000);
+            
+            root.collection('train').put('doc1', { value: 1 });
+            root.collection('test').put('doc1', { value: 2 });
+            
+            const info = root.info;
+            expect(info.root).toBe(testDir);
+            expect(info.batchSize).toBe(5000);
+            expect(info.collections).toContain('train');
+            expect(info.collections).toContain('test');
+        });
+    });
+    
+    describe('persistence', () => {
+        it('should persist collections across sessions', () => {
+            // Session 1: Create collections
+            const root1 = ZdsRoot.open(testDir);
+            const train1 = root1.collection('train');
+            train1.put('doc1', { persisted: true });
+            train1.close();
+            
+            // Session 2: Reopen and verify
+            const root2 = ZdsRoot.open(testDir);
+            expect(root2.collectionExists('train')).toBe(true);
+            
+            const train2 = root2.collection('train');
+            expect(train2.get('doc1')).toEqual({ persisted: true });
+            train2.close();
+        });
+    });
+});
+
+describe('ZdsRoot vs ZdsStore.open compatibility', () => {
+    let testDir: string;
+    
+    beforeEach(() => {
+        testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'zds-compat-test-'));
+    });
+    
+    afterEach(() => {
+        fs.rmSync(testDir, { recursive: true, force: true });
+    });
+    
+    it('should allow reading data written via ZdsRoot from ZdsStore.open', () => {
+        // Write via ZdsRoot
+        const root = ZdsRoot.open(testDir);
+        const train = root.collection('train');
+        train.put('doc1', { source: 'root' });
+        train.close();
+        
+        // Read via ZdsStore.open
+        const store = ZdsStore.open(testDir, 'train');
+        expect(store.get('doc1')).toEqual({ source: 'root' });
+        store.close();
+    });
+    
+    it('should allow reading data written via ZdsStore.open from ZdsRoot', () => {
+        // Write via ZdsStore.open
+        const store = ZdsStore.open(testDir, 'train');
+        store.put('doc1', { source: 'store' });
+        store.close();
+        
+        // Read via ZdsRoot
+        const root = ZdsRoot.open(testDir);
+        const train = root.collection('train');
+        expect(train.get('doc1')).toEqual({ source: 'store' });
+        train.close();
     });
 });

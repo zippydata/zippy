@@ -71,14 +71,31 @@ my_dataset/                    # Store (root directory)
 ```python
 from zippy import ZDSStore
 
-# Create or open a store with a collection
+# Single collection (classic flow)
 store = ZDSStore.open("./my_dataset", collection="train")
+store.put("doc_001", {"text": "Hello world"})
 
-# Use context manager for automatic cleanup
-with ZDSStore.open("./my_dataset", "train") as store:
-    store.put("doc_001", {"text": "Hello world"})
-    # Store is automatically closed when exiting the block
+# Multi-collection: omit the collection argument to get a root-capable handle
+store = ZDSStore.open("./my_dataset", native=True)
+train = store.collection("train")
+evaluation = store.collection("evaluation")
+
+train.put("doc_train", {"text": "Train sample"})
+evaluation.put("doc_eval", {"text": "Eval sample"})
+
+# Context manager for scoped writes
+with ZDSStore.open("./my_dataset", "train") as scoped_store:
+    scoped_store.put("doc_002", {"text": "Bye world"})
+
+# Need low-level control (lock state, mode)? Grab the underlying root
+native_root = store.root  # exposes NativeRoot / ZDSRoot
+# This will close all the handles into this ZDS path so be careful!
+native_root.close() 
 ```
+
+> 💡 **When is `ZDSRoot` needed?** Most workflows can stick to `ZDSStore.open(...)`. Only reach for `store.root` when you need explicit read/write modes, manual locking, or to share the memoized root with other bindings.
+>
+> ⚠️ **Closing the root is destructive:** `store.root.close()` tears down the shared lock and invalidates every reader/writer for that path. Call it only during shutdown/cleanup, never in the middle of active work.
 
 ### Adding Documents
 
@@ -305,10 +322,11 @@ for batch in stream.batch(32):
 ### Recipe: LLM Fine-tuning Dataset
 
 ```python
-from zippy import ZDSStore, ZDataset
+from zippy import ZDSRoot, ZDataset
 
-# Create training data store
-store = ZDSStore.open("./finetune_data", "conversations")
+# Create training data root and collections
+root = ZDSRoot.open("./finetune_data", native=True)
+store = root.collection("conversations")
 
 # Add conversation examples
 store.put("conv_001", {
@@ -349,8 +367,9 @@ from zippy import ZDSStore
 import json
 from datetime import datetime
 
-# Store evaluation results
-store = ZDSStore.open("./eval_results", "gpt4_baseline")
+# Store evaluation results across multiple runs
+root = ZDSRoot.open("./eval_results", native=True)
+store = root.collection("gpt4_baseline")
 
 def run_evaluation(model, test_cases):
     for i, test in enumerate(test_cases):
@@ -391,7 +410,8 @@ for f in failures[:5]:
 from zippy import ZDSStore
 import openai
 
-store = ZDSStore.open("./synthetic_data", "qa_pairs")
+root = ZDSRoot.open("./synthetic_data", native=True)
+store = root.collection("qa_pairs")
 
 def generate_qa_pairs(topic, count=10):
     """Generate Q&A pairs using an LLM"""
@@ -558,6 +578,32 @@ class ZDSStore:
     
     def close(self) -> None:
         """Close the store."""
+```
+
+### ZDSRoot
+
+```python
+class ZDSRoot:
+    @classmethod
+    def open(cls, path: str, batch_size: int = 5000, native: bool = False) -> ZDSRoot:
+        """Open or create a ZDS root. Initializes directories if needed."""
+
+    def collection(self, name: str, batch_size: Optional[int] = None, strict: bool = False) -> ZDSStore:
+        """Open (and lazily create) a collection under this root."""
+
+    def list_collections(self) -> List[str]:
+        """Return all collection names."""
+
+    def collection_exists(self, name: str) -> bool:
+        """Check if a collection already exists."""
+
+    @property
+    def root_path(self) -> Path:
+        """Absolute path to the root directory."""
+
+    @property
+    def batch_size(self) -> int:
+        """Default batch size used when opening collections."""
 ```
 
 ### ZDataset

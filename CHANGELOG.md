@@ -5,7 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.2] - 2025-12-15
+
+### Added
+
+#### Core Features
+- **ZDSRoot**: Root-level store handle for managing multiple collections safely
+  - `ZDSRoot::open(path, batch_size, mode)` creates/opens a ZDS root directory
+  - `root.collection(name)` returns a store handle for a specific collection
+  - `root.list_collections()` lists all collections in the root
+  - `root.collection_exists(name)` checks if a collection exists
+  - Enables writing to multiple collections without corruption
+
+- **Read/Write Modes**: Open stores in read-only or read-write mode
+  - `OpenMode::Read` - no locking, multiple readers allowed
+  - `OpenMode::ReadWrite` - exclusive write lock, safe concurrent access
+
+- **File Locking**: Exclusive write locks prevent multi-process corruption
+  - Uses flock + explicit lock file for cross-platform support
+  - Lock file includes PID, hostname, timestamp for debugging
+  - Automatic cleanup on process exit or crash
+
+- **Root Memoization**: Same-path opens return shared instance
+  - Prevents accidental multiple writers to same store
+  - Cache keyed by (canonical_path, mode)
+
+#### Python Package (`zippy-data`)
+- `ZDSRoot`: High-level root handle class
+  - `ZDSRoot.open(path, native=True, mode="rw")` for native Rust backend
+  - `root.mode` / `root.is_writable` properties
+  - `root.close()` to release locks
+  - Context manager support (`with ZDSRoot.open(...) as root:`)
+  - Pure Python fallback when native unavailable
+- `NativeRoot`: Native Rust bindings for root-level operations
+
+#### Node.js Package (`@zippydata/core`)
+- `ZdsRoot`: Native Rust root handle class
+  - `ZdsRoot.open(path, batchSize?, mode?)` factory method
+  - `root.collection(name, batchSize?)` returns store handle
+  - `root.mode` / `root.isWritable` getters
+  - `root.close()` method to release locks
+  - `root.info` getter for root metadata (now includes mode)
+
+### Changed
+- Renamed native Python module from `_core` to `_zippy_data` for consistency
+- `ZDSRoot::open()` now requires explicit mode parameter in Rust
 
 ## [0.1.0] - 2025-12-13
 

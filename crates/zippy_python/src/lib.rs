@@ -9,7 +9,7 @@ use pyo3::{
     prelude::*,
     types::{PyDict, PyList, PyTuple},
 };
-use zippy_data::FastStore;
+use zippy_data::{FastStore, OpenMode, ZDSRoot};
 
 /// Convert serde_json::Value to Python object
 fn json_to_py(py: Python<'_>, value: &serde_json::Value) -> PyResult<PyObject> {
@@ -362,6 +362,119 @@ impl ScanIterator {
     }
 }
 
+/// Root handle for a ZDS store directory.
+///
+/// This class represents a ZDS root directory without binding to a specific collection.
+/// It allows opening multiple collections from the same root safely.
+///
+/// Example:
+///     >>> root = NativeRoot.open("./data")
+///     >>> train = root.collection("train")
+///     >>> test = root.collection("test")
+///     >>> train.put("doc1", {"split": "train"})
+///     >>> test.put("doc1", {"split": "test"})
+#[pyclass]
+pub struct NativeRoot {
+    root: ZDSRoot,
+}
+
+#[pymethods]
+impl NativeRoot {
+    /// Open or create a ZDS root directory.
+    ///
+    /// Args:
+    ///     root: Path to the ZDS root directory
+    ///     batch_size: Default batch size for collections (default: 5000)
+    ///     mode: Open mode - "r" for read-only, "rw" for read-write (default: "rw")
+    #[staticmethod]
+    #[pyo3(signature = (root, batch_size = 5000, mode = "rw"))]
+    fn open(root: String, batch_size: usize, mode: &str) -> PyResult<Self> {
+        let open_mode = match mode {
+            "r" | "read" => OpenMode::Read,
+            "rw" | "read-write" | "readwrite" => OpenMode::ReadWrite,
+            _ => return Err(PyValueError::new_err(format!(
+                "Invalid mode '{}'. Use 'r' for read-only or 'rw' for read-write", mode
+            ))),
+        };
+
+        let zds_root = ZDSRoot::open(&root, batch_size, open_mode)
+            .map_err(|e| PyIOError::new_err(format!("Failed to open root: {}", e)))?;
+
+        Ok(NativeRoot { root: zds_root })
+    }
+
+    /// Get the root path.
+    #[getter]
+    fn root_path(&self) -> String {
+        self.root.root_path().to_string_lossy().to_string()
+    }
+
+    /// Get the default batch size.
+    #[getter]
+    fn batch_size(&self) -> usize {
+        self.root.batch_size()
+    }
+
+    /// Get the open mode ("r" or "rw").
+    #[getter]
+    fn mode(&self) -> &'static str {
+        match self.root.mode() {
+            OpenMode::Read => "r",
+            OpenMode::ReadWrite => "rw",
+        }
+    }
+
+    /// Check if this root is writable.
+    #[getter]
+    fn is_writable(&self) -> bool {
+        self.root.is_writable()
+    }
+
+    /// Open a collection within this ZDS root.
+    #[pyo3(signature = (name, batch_size = None))]
+    fn collection(&self, name: &str, batch_size: Option<usize>) -> PyResult<NativeStore> {
+        let store = if let Some(bs) = batch_size {
+            self.root.collection_with_batch_size(name, bs)
+        } else {
+            self.root.collection(name)
+        }
+        .map_err(|e| PyIOError::new_err(format!("Failed to open collection: {}", e)))?;
+
+        Ok(NativeStore {
+            store: Mutex::new(store),
+            root: self.root.root_path().to_string_lossy().to_string(),
+            collection: name.to_string(),
+        })
+    }
+
+    /// List all collections in this ZDS root.
+    fn list_collections(&self) -> PyResult<Vec<String>> {
+        self.root
+            .list_collections()
+            .map_err(|e| PyIOError::new_err(format!("Failed to list collections: {}", e)))
+    }
+
+    /// Check if a collection exists.
+    fn collection_exists(&self, name: &str) -> bool {
+        self.root.collection_exists(name)
+    }
+
+    /// Close the root and release any locks.
+    fn close(&self) {
+        self.root.close();
+    }
+
+    fn __repr__(&self) -> String {
+        let collections = self.root.list_collections().unwrap_or_default();
+        format!(
+            "NativeRoot(root={:?}, mode={:?}, collections={:?})",
+            self.root.root_path(),
+            self.mode(),
+            collections
+        )
+    }
+}
+
 /// Get the ZDS version.
 #[pyfunction]
 fn version() -> &'static str {
@@ -372,6 +485,7 @@ fn version() -> &'static str {
 #[pymodule]
 fn _zippy_data(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<NativeStore>()?;
+    m.add_class::<NativeRoot>()?;
     m.add_class::<ScanIterator>()?;
     m.add_function(wrap_pyfunction!(version, m)?)?;
     Ok(())

@@ -11,6 +11,14 @@ export interface StoreInfo {
 }
 /** Get the ZDS version. */
 export declare function version(): string
+/** Root information. */
+export interface RootInfo {
+  root: string
+  batchSize: number
+  mode: string
+  isWritable: boolean
+  collections: Array<string>
+}
 export type ZDSStore = ZdsStore
 /** High-performance ZDS Store backed by Rust FastStore (JSONL-based). */
 export declare class ZdsStore {
@@ -60,4 +68,47 @@ export declare class BulkWriter {
   flush(): void
   /** Get current document count. */
   get count(): number
+}
+export type ZDSRoot = ZdsRoot
+/**
+ * Root handle for a ZDS store directory.
+ *
+ * This class represents a ZDS root directory without binding to a specific collection.
+ * It allows opening multiple collections from the same root safely, avoiding corruption
+ * when writing to multiple collections simultaneously.
+ *
+ * Example:
+ *   const root = ZdsRoot.open('./data');
+ *   const train = root.collection('train');
+ *   const test = root.collection('test');
+ *   train.put('doc1', { split: 'train' });
+ *   test.put('doc1', { split: 'test' });
+ */
+export declare class ZdsRoot {
+  /**
+   * Open or create a ZDS root directory.
+   *
+   * @param root - Path to the ZDS root directory
+   * @param batchSize - Default batch size for collections (default: 5000)
+   * @param mode - Open mode: "r" for read-only, "rw" for read-write (default: "rw")
+   */
+  static open(root: string, batchSize?: number | undefined | null, mode?: string | undefined | null): ZdsRoot
+  /** Get the root path. */
+  get rootPath(): string
+  /** Get the default batch size. */
+  get batchSize(): number
+  /** Get the open mode ("r" or "rw"). */
+  get mode(): string
+  /** Check if this root is writable. */
+  get isWritable(): boolean
+  /** Open a collection within this ZDS root. */
+  collection(name: string, batchSize?: number | undefined | null): ZdsStore
+  /** List all collections in this ZDS root. */
+  listCollections(): Array<string>
+  /** Check if a collection exists. */
+  collectionExists(name: string): boolean
+  /** Close the root and release any locks. */
+  close(): void
+  /** Get root info. */
+  get info(): RootInfo
 }

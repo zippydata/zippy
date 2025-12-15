@@ -39,13 +39,15 @@ __author__ = "Omar Kamali"
 # Try to import native bindings
 _HAS_NATIVE = False
 try:
-    from ._zippy_data import NativeStore, version as native_version
+    from ._zippy_data import NativeStore, NativeRoot, version as native_version
     _HAS_NATIVE = True
 except ImportError:
     NativeStore = None
+    NativeRoot = None
     native_version = None
 
 from .store import ZDSStore
+from .root import ZDSRoot
 from .fast_store import FastZDSStore
 from .dataset import ZDataset
 from .iterable_dataset import ZIterableDataset
@@ -81,6 +83,7 @@ __all__ = [
     "to_hf_dict",
     # Stores
     "ZDSStore",
+    "ZDSRoot",
     "FastZDSStore",
     # Datasets
     "ZDataset", 

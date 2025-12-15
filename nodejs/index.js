@@ -310,8 +310,9 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { ZdsStore, version, BulkWriter } = nativeBinding
+const { ZdsStore, version, BulkWriter, ZdsRoot } = nativeBinding
 
 module.exports.ZdsStore = ZdsStore
 module.exports.version = version
 module.exports.BulkWriter = BulkWriter
+module.exports.ZdsRoot = ZdsRoot

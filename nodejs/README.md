@@ -42,6 +42,38 @@ console.log(`Found ${ids.length} documents`);
 store.close();
 ```
 
+## Multi-Collection Management with `ZdsStore`
+
+For writing to multiple collections safely, just omit the collection argument:
+
+```typescript
+import { ZdsStore } from '@zippy/core';
+
+// Open a root-capable handle
+const store = ZdsStore.open('./data');
+
+// Grab collections on demand
+const train = store.collection('train');
+const test = store.collection('test');
+const validation = store.collection('validation');
+
+train.put('doc_001', { split: 'train', features: [1.0, 2.0] });
+test.put('doc_001', { split: 'test', features: [1.5, 2.5] });
+validation.put('doc_001', { split: 'val', features: [1.2, 2.2] });
+
+console.log(store.listCollections());  // ['test', 'train', 'validation']
+
+// Need explicit access to the shared root? (advanced)
+const nativeRoot = store.root; // exposes ZdsRoot for locking/mode control
+// ⚠️ Closing the root tears down every reader/writer for this path.
+// Only do this during shutdown/cleanup.
+nativeRoot.close();
+```
+
+> ℹ️ `ZdsRoot` still exists under the hood (exposed via `store.root`) for
+> advanced scenarios that need manual locking or explicit mode control, but
+> most workflows can rely entirely on the unified `ZdsStore.open()` entry point.
+
 ## High-Throughput Ingestion
 
 For bulk writes, use the `BulkWriter` class:
@@ -111,6 +143,28 @@ class BulkWriter {
 interface BulkWriteOptions {
   collection?: string;  // Default: "default"
   batchSize?: number;   // Default: 5000
+}
+```
+
+### ZdsRoot
+
+```typescript
+class ZdsRoot {
+  static open(root: string, batchSize?: number): ZdsRoot;
+  
+  collection(name: string, batchSize?: number): ZdsStore;
+  listCollections(): string[];
+  collectionExists(name: string): boolean;
+  
+  readonly rootPath: string;
+  readonly batchSize: number;
+  readonly info: RootInfo;
+}
+
+interface RootInfo {
+  root: string;
+  batchSize: number;
+  collections: string[];
 }
 ```
 

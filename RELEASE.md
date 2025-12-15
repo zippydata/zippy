@@ -19,7 +19,12 @@ All releases are automated via GitHub Actions with trusted publishing (no manual
 ## Quick Release (Automated)
 
 ```bash
-# 1. Update version in all manifests (see Version Locations below)
+# 1. Update version across all packages
+python scripts/bump_version.py 0.1.0
+
+# (optional) Preview without writing files
+python scripts/bump_version.py 0.1.0 --dry-run
+
 # 2. Create and push a tag
 git tag v0.1.0
 git push origin v0.1.0
@@ -35,15 +40,15 @@ git push origin v0.1.0
 
 ## Version Locations
 
-Update version in ALL of these files before release:
+Update version in ALL of these files before release (or run `python scripts/bump_version.py <new-version>` which edits them for you):
 
 ```
 python/zippy/__init__.py          __version__ = "0.1.0"
 python/pyproject.toml             version = "0.1.0"
 nodejs/package.json               "version": "0.1.0"
-crates/zippy_data/Cargo.toml      version = "0.1.0"
-crates/zippy_python/Cargo.toml    version = "0.1.0"
-crates/zippy_nodejs/Cargo.toml    version = "0.1.0"
+nodejs/package-lock.json          "version": "0.1.0"
+Cargo.toml                        [workspace.package] version = "0.1.0"
+crates/zippy_data/src/lib.rs      ZDS_VERSION = "0.1.0"
 ```
 
 Use semantic versioning: `MAJOR.MINOR.PATCH`
@@ -130,10 +135,13 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@release/v1
         # No token needed - uses trusted publishing
 
-  # Publish to npm
+  # Publish to npm (trusted publishing)
   publish-npm:
     needs: build-nodejs
     runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -145,20 +153,24 @@ jobs:
           pattern: nodejs-*
           merge-multiple: true
           path: nodejs
-      - run: npm publish --access public
+      - run: npm publish --provenance --access public
         working-directory: nodejs
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # No token needed - uses npm trusted publishing (OIDC)
 
-  # Publish to crates.io
+  # Publish to crates.io (trusted publishing)
   publish-cargo:
     runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - run: cargo publish -p zippy-data
+      - uses: rust-lang/crates-io-auth-action@v1
+        id: crates-token
+      - run: cargo publish -p zippy_data
         env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ steps.crates-token.outputs.token }}
 
   # Create GitHub Release
   create-release:
@@ -246,14 +258,15 @@ jobs:
 ### npm
 
 1. Create npm account and org (@zippydata)
-2. Generate automation token
-3. Add `NPM_TOKEN` to GitHub Secrets
+2. Enable Trusted Publishers (GitHub Actions) for `zippydata/zippy` → `.github/workflows/release.yml`
+3. (Optional fallback) Generate automation token if you still need manual publishing
 
-### crates.io
+### crates.io (Trusted Publishing)
 
-1. Login: `cargo login`
-2. Generate token at crates.io
-3. Add `CARGO_TOKEN` to GitHub Secrets
+1. In crates.io, open the `zippy_data` crate → **Settings → Verified publishers**.
+2. Add GitHub Actions publisher for `zippydata/zippy` → `.github/workflows/release.yml` (environment `release`).
+3. In GitHub Actions, call `rust-lang/crates-io-auth-action@v1` and pass its token output to `cargo publish`.
+4. Remove legacy `CARGO_TOKEN` secrets once OIDC is working.
 
 ### GitHub
 
@@ -277,7 +290,10 @@ Before creating a release tag:
 - [ ] `python/zippy/__init__.py` updated
 - [ ] `python/pyproject.toml` updated
 - [ ] `nodejs/package.json` updated
-- [ ] `crates/*/Cargo.toml` updated
+- [ ] `nodejs/package-lock.json` updated
+- [ ] `Cargo.toml` workspace version updated
+- [ ] `crates/zippy_data/src/lib.rs` ZDS_VERSION updated
+- [ ] (or run `python scripts/bump_version.py <new-version>` once and review)
 - [ ] All versions match
 
 ### Documentation

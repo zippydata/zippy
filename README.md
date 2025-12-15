@@ -138,6 +138,34 @@ filtered = dataset.filter(lambda x: x["age"] > 30)
 shuffled = dataset.shuffle(seed=42)
 ```
 
+### Python: Multi-Collection Writing with `ZDSStore`
+
+```python
+from zippy import ZDSStore
+
+# Open the store with no collection to get a root-capable handle
+store = ZDSStore.open("./ml_data")
+
+# Grab collection handles on demand
+train = store.collection("train")
+test = store.collection("test")
+validation = store.collection("validation")
+
+# Write to all collections safely (shared write lock + memoized root)
+train.put("doc_001", {"split": "train", "features": [1.0, 2.0]})
+test.put("doc_001", {"split": "test", "features": [1.5, 2.5]})
+validation.put("doc_001", {"split": "val", "features": [1.2, 2.2]})
+
+# List all collections via the same handle
+print(store.list_collections())  # ['test', 'train', 'validation']
+
+# Need explicit access to the shared root? (advanced)
+native_root = store.root  # exposes NativeRoot/ZDSRoot for locking/mode control
+# ⚠️ Closing the root tears down every reader/writer for this path.
+# Only do this during shutdown/cleanup.
+native_root.close()
+```
+
 ### Python: ML Training
 
 ```python
