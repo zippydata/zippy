@@ -3,9 +3,11 @@
 //! Provides cross-platform write locking using flock (via fs2) plus an
 //! explicit lock file for systems where flock is unreliable.
 
-use std::fs::{File, OpenOptions};
-use std::io::{Read, Write};
-use std::path::{Path, PathBuf};
+use std::{
+    fs::{File, OpenOptions},
+    io::{Read, Write},
+    path::{Path, PathBuf},
+};
 
 use fs2::FileExt;
 
@@ -150,8 +152,9 @@ impl Drop for WriteLock {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tempfile::TempDir;
+
+    use super::*;
 
     #[test]
     fn test_acquire_release() {

@@ -392,9 +392,12 @@ impl NativeRoot {
         let open_mode = match mode {
             "r" | "read" => OpenMode::Read,
             "rw" | "read-write" | "readwrite" => OpenMode::ReadWrite,
-            _ => return Err(PyValueError::new_err(format!(
-                "Invalid mode '{}'. Use 'r' for read-only or 'rw' for read-write", mode
-            ))),
+            _ => {
+                return Err(PyValueError::new_err(format!(
+                    "Invalid mode '{}'. Use 'r' for read-only or 'rw' for read-write",
+                    mode
+                )))
+            }
         };
 
         let zds_root = ZDSRoot::open(&root, batch_size, open_mode)

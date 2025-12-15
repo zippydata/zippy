@@ -272,9 +272,12 @@ impl ZDSRoot {
         let open_mode = match mode_str {
             "r" | "read" => OpenMode::Read,
             "rw" | "read-write" | "readwrite" => OpenMode::ReadWrite,
-            _ => return Err(Error::from_reason(format!(
-                "Invalid mode '{}'. Use 'r' for read-only or 'rw' for read-write", mode_str
-            ))),
+            _ => {
+                return Err(Error::from_reason(format!(
+                    "Invalid mode '{}'. Use 'r' for read-only or 'rw' for read-write",
+                    mode_str
+                )))
+            }
         };
 
         let zds_root = RustZDSRoot::open(&root, batch_size, open_mode)

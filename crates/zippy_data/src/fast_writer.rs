@@ -422,7 +422,9 @@ impl FastStore {
     /// Uses SIMD newline search and single write for maximum throughput.
     pub fn write_jsonl_blob(&mut self, jsonl_data: &[u8], doc_ids: &[String]) -> Result<usize> {
         if self.mode == OpenMode::Read {
-            return Err(Error::ReadOnly("cannot write in read-only mode".to_string()));
+            return Err(Error::ReadOnly(
+                "cannot write in read-only mode".to_string(),
+            ));
         }
         let writer = self.writer.as_mut().ok_or_else(|| {
             Error::Io(std::io::Error::new(
@@ -858,7 +860,8 @@ impl ZDSRoot {
         }
 
         // Canonicalize path for consistent caching (after directory exists)
-        let canonical = std::fs::canonicalize(root_path).unwrap_or_else(|_| root_path.to_path_buf());
+        let canonical =
+            std::fs::canonicalize(root_path).unwrap_or_else(|_| root_path.to_path_buf());
         let cache_key = (canonical.clone(), mode);
 
         // Check cache first
@@ -989,8 +992,8 @@ impl ZDSRoot {
     /// After calling this, the root handle is still valid but will need to
     /// reacquire the lock if opened again.
     pub fn close(&self) {
-        let canonical = std::fs::canonicalize(&self.inner.root)
-            .unwrap_or_else(|_| self.inner.root.clone());
+        let canonical =
+            std::fs::canonicalize(&self.inner.root).unwrap_or_else(|_| self.inner.root.clone());
         let cache_key = (canonical, self.inner.mode);
 
         let mut cache = ROOT_CACHE.write();
@@ -1008,9 +1011,10 @@ impl ZDSRoot {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use serde_json::json;
     use tempfile::TempDir;
+
+    use super::*;
 
     #[test]
     fn test_fast_store_basic() {
@@ -1056,9 +1060,14 @@ mod tests {
         let mut test = root.collection("test").unwrap();
         let mut valid = root.collection("validation").unwrap();
 
-        train.put("doc1", json!({"split": "train", "data": 1})).unwrap();
-        test.put("doc1", json!({"split": "test", "data": 2})).unwrap();
-        valid.put("doc1", json!({"split": "validation", "data": 3})).unwrap();
+        train
+            .put("doc1", json!({"split": "train", "data": 1}))
+            .unwrap();
+        test.put("doc1", json!({"split": "test", "data": 2}))
+            .unwrap();
+        valid
+            .put("doc1", json!({"split": "validation", "data": 3}))
+            .unwrap();
 
         train.flush().unwrap();
         test.flush().unwrap();
