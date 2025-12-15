@@ -28,7 +28,7 @@ pub use txlog::{JournalEntry, TransactionLog};
 pub use writer::{BufferedWriter, WriteConfig};
 
 /// ZDS format version
-pub const ZDS_VERSION: &str = "0.1.1";
+pub const ZDS_VERSION: &str = "0.1.2";
 
 #[cfg(test)]
 mod tests {

@@ -33,7 +33,7 @@ Quick Start:
         print(doc)
 """
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 __author__ = "Omar Kamali"
 
 # Try to import native bindings
