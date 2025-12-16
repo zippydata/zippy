@@ -26,24 +26,21 @@ use serde_json::Value;
 use crate::{lock::WriteLock, Error, Layout, Result};
 
 /// Open mode for ZDS stores.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub enum OpenMode {
     /// Read-only mode - no writes allowed, no lock acquired.
     Read,
     /// Read-write mode - writes allowed, exclusive lock acquired.
+    #[default]
     ReadWrite,
 }
 
-impl Default for OpenMode {
-    fn default() -> Self {
-        OpenMode::ReadWrite
-    }
-}
+type CacheKey = (PathBuf, OpenMode);
+type RootCache = HashMap<CacheKey, Weak<ZDSRootInner>>;
 
 /// Global cache of open ZDSRoot instances by (canonical_path, mode).
 /// Uses weak references so roots are cleaned up when all handles are dropped.
-static ROOT_CACHE: Lazy<RwLock<HashMap<(PathBuf, OpenMode), Weak<ZDSRootInner>>>> =
-    Lazy::new(|| RwLock::new(HashMap::new()));
+static ROOT_CACHE: Lazy<RwLock<RootCache>> = Lazy::new(|| RwLock::new(HashMap::new()));
 
 /// Entry in the in-memory index (16 bytes, aligned).
 #[derive(Debug, Clone, Copy)]

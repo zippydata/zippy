@@ -140,6 +140,7 @@ impl WriteLock {
     }
 }
 
+#[allow(clippy::incompatible_msrv)] // fs2::FileExt::unlock existed well before the std stabilization Clippy warns about
 impl Drop for WriteLock {
     fn drop(&mut self) {
         // Unlock the file (flock is released automatically when file is closed)
